@@ -10,6 +10,12 @@ A digital navigation experiment with a persistent learning controller, a market-
 
 The first task is to find the exit. The larger objective is to make useful work that can help fund continued operation. An escape is a recorded event, not proof of financial independence.
 
+## current launch
+
+The next Project Rat Race launch targets **Solana**. The prior Robinhood Chain run was a test and has been stopped and archived. The public site is back to an empty, sealed state with no CA, launch clock, learned history, browser activity or paid agent work.
+
+The Solana mint-verification, market and funding adapters are **not yet enabled**. The waiting mode cannot activate or spend, even if an enable flag is set. The retained EVM modules document the previous test implementation; they are not a Solana adapter. Existing wallets and financial records remain separate from resets. Do not treat a prior EVM treasury as a Solana receiving address.
+
 ## what this repository contains
 
 This is the official public source release of Project Rat Race. It includes the website, navigation controller, market adapter, browser observation layer, AI agent loop, isolated execution interface, credit protection, narrow payment verification, and automated tests.
@@ -106,7 +112,7 @@ npm run start:engine
 
 The protected reference worker uses macOS Keychain and a dedicated Lima Linux VM. Operating it requires an independently configured treasury, verified signing identity, current market source, isolated executor, budget policy and explicit launch authorization. Do not enable a funded configuration casually.
 
-The project uses native ETH on Robinhood Chain for treasury funding. Operator deposits are funding, not verified creator fees or earned income. Automatic launchpad fee routing is not required for manual treasury funding.
+The prior test used native ETH on Robinhood Chain for treasury funding. That legacy route is not the upcoming Solana funding configuration. Operator deposits remain funding, not verified creator fees or earned income.
 
 Read [architecture](docs/ARCHITECTURE.md), [operator setup](docs/OPERATIONS.md) and [security](SECURITY.md) before enabling anything.
 

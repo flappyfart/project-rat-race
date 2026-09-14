@@ -123,9 +123,18 @@ function short(s: string | null) {
 function validStatus(v: unknown): v is Status {
   if (!v || typeof v !== "object") return false;
   const s = v as Status;
+  const networkValid =
+    s.chainNamespace === "solana"
+      ? s.chainId === null &&
+        s.quoteAsset === "SOL" &&
+        ["prelaunch", "verification_pending", "error"].includes(s.phase) &&
+        s.contract === null &&
+        s.startedAt === null &&
+        s.maze === null &&
+        s.totalSteps === 0
+      : s.chainId === 4663 && s.quoteAsset === "ETH";
   return (
-    s.chainId === 4663 &&
-    s.quoteAsset === "ETH" &&
+    networkValid &&
     Object.keys(phaseCopy).includes(s.phase) &&
     typeof s.episode === "number" &&
     typeof s.totalSteps === "number" &&
@@ -872,7 +881,7 @@ export default function App() {
               {[
                 [
                   "what starts the maze.",
-                  "an operator supplied contract and launch transaction must be verified on robinhood chain. activation also requires usable funding, a fresh reference market observation and the isolated executor. until then, the official rat remains sealed.",
+                  "the upcoming solana mint and launch evidence must be verified with the correct solana adapter. activation also requires usable funding, a fresh reference market observation and the isolated executor. until then, the official rat remains sealed.",
                 ],
                 [
                   "what changes the maze.",
@@ -984,8 +993,10 @@ export default function App() {
         </p>
         <ol>
           <li>contract address supplied by the operator.</li>
-          <li>successful launch receipt on robinhood chain.</li>
-          <li>token code and confirmed block verified.</li>
+          <li>verified solana mint and successful launch transaction.</li>
+          <li>
+            token program, mint identity and finalized launch evidence verified.
+          </li>
           <li>approved market source and explicit activation.</li>
         </ol>
         <div className="dialog-status">

@@ -1,31 +1,28 @@
 {
+  "launchNetwork": "solana",
   "enabled": false,
-  "chainId": 4663,
+  "chainId": null,
   "contract": null,
   "launchTx": null,
-  "rpcUrl": "https://robinhood-rpc.publicnode.com",
-  "rpcFallbackUrls": ["https://rpc.mainnet.chain.robinhood.com"],
-  "minConfirmations": 12,
+  "rpcUrl": null,
+  "rpcFallbackUrls": [],
+  "minConfirmations": null,
   "market": {
-    "kind": "dex_reference",
+    "kind": "unconfigured",
     "url": null,
     "sourceId": null,
     "assetContract": null,
-    "identityProvenance": "",
+    "identityProvenance": "awaiting solana launch configuration",
     "operatorVerified": false,
     "maxAgeSeconds": 120,
     "minLiquidityUsd": 10000
   },
-  "internet": {
-    "enabled": false,
-    "seedUrl": "https://en.wikipedia.org/wiki/Rat",
-    "executablePath": null
-  },
+  "internet": { "enabled": false, "seedUrl": null, "executablePath": null },
   "economy": {
     "treasury": null,
     "spendingEnabled": false,
     "maxIntentWei": "4000000000000000",
     "approvedRecipients": []
   },
-  "seed": 4663
+  "seed": null
 }

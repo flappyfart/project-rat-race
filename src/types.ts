@@ -10,7 +10,8 @@ export type Status = {
   escape?: { episode: number; totalSteps: number; hash: string } | null;
   phase: "prelaunch" | "verification_pending" | "live" | "paused" | "error";
   reason: string;
-  chainId: number;
+  chainId: number | null;
+  chainNamespace?: "eip155" | "solana";
   quoteAsset: string;
   contract: string | null;
   launchTx: string | null;
@@ -26,9 +27,10 @@ export type Status = {
 };
 export const locked: Status = {
   phase: "prelaunch",
-  reason: "awaiting operator launch",
-  chainId: 4663,
-  quoteAsset: "ETH",
+  reason: "awaiting solana CA",
+  chainNamespace: "solana",
+  chainId: null,
+  quoteAsset: "SOL",
   contract: null,
   launchTx: null,
   startedAt: null,

@@ -91,9 +91,11 @@ export default function Navigation({
     menuButton = useRef<HTMLButtonElement>(null);
   const unavailable = !apiReady || status.phase === "error",
     phase = apiReady ? phaseNames[status.phase] : "checking status",
-    treasuryUrl = /^0x[0-9a-fA-F]{40}$/.test(treasury ?? "")
-      ? "https://robinhoodchain.blockscout.com/address/" + treasury
-      : null;
+    treasuryUrl =
+      status.chainNamespace !== "solana" &&
+      /^0x[0-9a-fA-F]{40}$/.test(treasury ?? "")
+        ? "https://robinhoodchain.blockscout.com/address/" + treasury
+        : null;
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -264,8 +266,12 @@ export default function Navigation({
             </span>
           </a>
           <div className="rail-identity">
-            <strong>$escape / eth</strong>
-            <span>robinhood chain</span>
+            <strong>$escape / {status.quoteAsset.toLowerCase()}</strong>
+            <span>
+              {status.chainNamespace === "solana"
+                ? "solana"
+                : "robinhood chain"}
+            </span>
           </div>
           {links()}
           {telemetry}
@@ -334,7 +340,7 @@ export default function Navigation({
           </span>
         </a>
         <span className="mobile-ticker">
-          $escape <span>/ eth</span>
+          $escape <span>/ {status.quoteAsset.toLowerCase()}</span>
         </span>
       </header>
       <div

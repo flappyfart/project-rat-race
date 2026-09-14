@@ -128,6 +128,8 @@ export async function verifyLaunch(
   });
   if (config?.enabled !== true)
     return reject("operator launch disabled", "prelaunch");
+  if (config.launchNetwork === "solana")
+    return reject("solana launch verification requires a separate adapter");
   if (config.chainId !== CHAIN_ID) return reject("operator chain must be 4663");
   if (!validAddress(config.contract))
     return reject("missing or invalid contract address");
