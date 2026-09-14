@@ -21,7 +21,7 @@ import {
 } from "@phosphor-icons/react";
 import type { Status } from "./types";
 import "./navigation.css";
-const X_URL = "https://x.com/pr0jectratrace";
+const X_URL = "https://x.com/Proj3ctRatRace";
 const GITHUB_URL = "https://github.com/flappyfart/project-rat-race";
 const sections = [
   { id: "top", label: "the lab", icon: Flask },
@@ -277,10 +277,10 @@ export default function Navigation({
               href={X_URL}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="project rat race on x, @pr0jectratrace"
+              aria-label="project rat race on x, @proj3ctratrace"
             >
               <XLogo size={20} />
-              <span>@pr0jectratrace</span>
+              <span>@proj3ctratrace</span>
               <ArrowUpRight size={13} />
             </a>
             <button
@@ -363,7 +363,7 @@ export default function Navigation({
           href={X_URL}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="project rat race on x, @pr0jectratrace"
+          aria-label="project rat race on x, @proj3ctratrace"
         >
           <XLogo size={20} />
         </a>
@@ -420,9 +420,9 @@ export default function Navigation({
               href={X_URL}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="project rat race on x, @pr0jectratrace"
+              aria-label="project rat race on x, @proj3ctratrace"
             >
-              <XLogo size={19} /> @pr0jectratrace <ArrowUpRight size={14} />
+              <XLogo size={19} /> @proj3ctratrace <ArrowUpRight size={14} />
             </a>
             {treasuryUrl && (
               <a

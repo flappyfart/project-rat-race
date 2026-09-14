@@ -4,7 +4,7 @@
 
 ### the market is the maze.
 
-**$ESCAPE** · [website](https://projectratrace.org) · [x](https://x.com/pr0jectratrace)
+**$ESCAPE** · [website](https://projectratrace.org) · [x](https://x.com/Proj3ctRatRace)
 
 A digital navigation experiment with a persistent learning controller, a market-shaped maze, and a treasury-funded AI workspace.
 
