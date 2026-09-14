@@ -31,6 +31,7 @@ import type { Status } from "./types";
 import Workshop from "./Workshop";
 import Manifesto from "./Manifesto";
 import Navigation from "./Navigation";
+import { ArrivalReveal, KineticHeadline } from "./Arrival";
 
 type Theme = "light" | "dark";
 type Connection = {
@@ -322,6 +323,7 @@ export default function App() {
         copied={copied}
       />
       <div className="page-content">
+        <ArrivalReveal />
         <main id="main">
           <section id="top" className="hero">
             <div className="hero-copy">
@@ -329,11 +331,7 @@ export default function App() {
                 <span className="small-cross">+</span> independent computational
                 laboratory
               </div>
-              <h1>
-                the market
-                <br />
-                is the maze.
-              </h1>
+              <KineticHeadline />
               <p className="hero-description">
                 a digital rat. a changing world.
                 <br />

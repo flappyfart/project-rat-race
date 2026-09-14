@@ -1,0 +1,184 @@
+/* Presentation layers: navigation 20, mobile dock 30, transient arrival 40.
+   Native dialogs remain in the browser top layer. The reveal never captures input. */
+.arrival-reveal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  overflow: clip;
+}
+.arrival-reveal[hidden] {
+  display: none !important;
+}
+.arrival-door {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.1%;
+  background: var(--bg);
+  will-change: transform;
+}
+.arrival-door-left {
+  left: 0;
+}
+.arrival-door-right {
+  right: 0;
+}
+.arrival-brand {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.arrival-brand-inner {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 18px;
+}
+.arrival-monogram {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 52px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.09em;
+  padding-right: 5px;
+}
+.arrival-wordmark {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+}
+.page-content .hero-copy,
+.page-content .hero-apparatus {
+  animation: none;
+}
+.kinetic-headline .kinetic-line {
+  display: block;
+  white-space: nowrap;
+  line-height: inherit;
+}
+.shuffle-word {
+  display: inline-block;
+  position: relative;
+  white-space: nowrap;
+}
+.shuffle-measure {
+  visibility: hidden;
+}
+.shuffle-ink {
+  position: absolute;
+  inset: 0;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root.rr-arriving .arrival-reveal {
+    display: block;
+  }
+  :root.rr-arriving .arrival-door-left {
+    animation: arrival-left 650ms 520ms cubic-bezier(0.76, 0, 0.24, 1) both;
+  }
+  :root.rr-arriving .arrival-door-right {
+    animation: arrival-right 650ms 520ms cubic-bezier(0.76, 0, 0.24, 1) both;
+  }
+  :root.rr-arriving .arrival-brand-inner {
+    animation: arrival-brand 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  :root.rr-arriving .page-content .hero-apparatus {
+    animation: arrival-apparatus 1050ms 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  :root.rr-arriving .kinetic-line {
+    animation: arrival-line 720ms 330ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  :root.rr-arriving .kinetic-line:nth-child(2) {
+    animation-delay: 420ms;
+  }
+  :root.rr-arriving .hero-description,
+  :root.rr-arriving .hero-copy > .primary-link {
+    animation: arrival-support 800ms 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  :root.rr-arriving .desktop-rail .rail-brand,
+  :root.rr-arriving .mobile-brandbar .rail-brand {
+    animation: arrival-support 850ms 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes arrival-left {
+    to {
+      transform: translateX(-101%);
+    }
+  }
+  @keyframes arrival-right {
+    to {
+      transform: translateX(101%);
+    }
+  }
+  @keyframes arrival-brand {
+    0% {
+      opacity: 0;
+      transform: translateY(12px) scale(0.92);
+    }
+    20%,
+    68% {
+      opacity: 1;
+      transform: none;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-14px) scale(1.04);
+    }
+  }
+  @keyframes arrival-apparatus {
+    from {
+      opacity: 0.08;
+      transform: translateY(22px) scale(0.975);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes arrival-line {
+    from {
+      opacity: 0.1;
+      transform: translateY(0.2em);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes arrival-support {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arrival-reveal {
+    display: none !important;
+  }
+  .kinetic-line {
+    animation: none !important;
+  }
+}
+@media (max-width: 600px) {
+  .arrival-monogram {
+    width: 64px;
+    height: 64px;
+    font-size: 44px;
+  }
+  .arrival-brand-inner {
+    gap: 14px;
+  }
+}
