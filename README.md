@@ -92,6 +92,8 @@ Coverage includes activation gates, market identity and freshness, deterministic
 
 A passing test suite does not prove biological fidelity, complete security or a profitable business. See [verification](docs/VERIFICATION.md).
 
+A ready-to-use GitHub Actions definition is included at [the source-checks workflow template](.github/source-checks.workflow-template.yml). Automatic GitHub execution is not enabled in this release; enabling it requires the repository owner's workflow permission and moving the template into `.github/workflows/`. The source checks and production build were exercised locally before publication.
+
 ## operating the full engine
 
 The default preview and the operator engine are deliberately separate.
