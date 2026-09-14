@@ -26,6 +26,7 @@ import {
   DEFAULT_CREDIT_POLICY,
   CreditWaitError,
 } from "./credit-guard.mjs";
+import { RpcPool, RH_RPC, RH_RPC_FALLBACK } from "./rpc-pool.mjs";
 const RH = "https://rpc.mainnet.chain.robinhood.com",
   BASE = "https://mainnet.base.org",
   VENICE = "https://api.venice.ai";
@@ -57,6 +58,9 @@ export class WalletTransport {
     root,
     model = "qwen3-coder-480b-a35b-instruct-turbo",
     isRehearsal = false,
+    rpcUrl = RH_RPC,
+    rpcFallbackUrls = [RH_RPC_FALLBACK],
+    rpcFetch = fetch,
     canSpend = () => false,
   } = {}) {
     this.privateRoot = privateRoot;
@@ -68,6 +72,16 @@ export class WalletTransport {
     this.ready = false;
     this.catalog = null;
     this.catalogAt = 0;
+    this.rhRpc = new RpcPool({
+      urls: [rpcUrl, ...rpcFallbackUrls],
+      chainId: 4663,
+      fetchImpl: rpcFetch,
+    });
+    this.baseRpc = new RpcPool({
+      urls: [BASE],
+      chainId: 8453,
+      fetchImpl: rpcFetch,
+    });
   }
   async exclusive(fn) {
     const old = this.#queue;
@@ -159,23 +173,10 @@ export class WalletTransport {
     return { ok: r.ok, status: r.status, data };
   }
   async rpc(chain, method, params = []) {
-    const r = await this.json(
-      chain === 4663
-        ? RH
-        : chain === 8453
-          ? BASE
-          : (() => {
-              throw Error("unsupported chain");
-            })(),
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-      },
-    );
-    if (!r.ok || r.data.error || r.data.id !== 1)
-      throw Error("chain RPC unavailable: " + method);
-    return r.data.result;
+    const pool =
+      chain === 4663 ? this.rhRpc : chain === 8453 ? this.baseRpc : null;
+    if (!pool) throw Error("unsupported chain");
+    return pool.call(method, params);
   }
   async auth(resource) {
     const w = await this.wallet(),

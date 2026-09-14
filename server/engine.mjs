@@ -46,7 +46,7 @@ export async function createEngine({
     return (
       current.enabled === true &&
       current.economy?.spendingEnabled === true &&
-      runtime?.gate.ok === true &&
+      runtime?.isAuthorized() === true &&
       !!runtime.state &&
       current.contract?.toLowerCase() === runtime.identity?.contract
     );
@@ -54,6 +54,8 @@ export async function createEngine({
   const transport = await new WalletTransport({
       root: path.join(financialRoot, "transport"),
       isRehearsal: rehearsal,
+      rpcUrl: cfg.rpcUrl,
+      rpcFallbackUrls: cfg.rpcFallbackUrls ?? [],
       canSpend,
     }).initialize(),
     funding = new FundingService({
@@ -82,7 +84,12 @@ export async function createEngine({
     configPath,
     checkpointPath: path.join(stateRoot, "checkpoint.json"),
     dependencies: {
-      ...(rpc ? { rpc } : {}),
+      ...(rpc
+        ? { rpc }
+        : {
+            rpc: (method, params) => transport.rhRpc.launchRead(method, params),
+            launchFreshUntil: () => transport.rhRpc.launchFreshUntil(),
+          }),
       marketFetch: () => market.get(),
       startupReady: async () => runner.ready && resources.startupReady(),
     },
@@ -95,7 +102,7 @@ export async function createEngine({
     lastHealth = 0;
   const driveFunding = (urgent = false) => {
     const permitted = () =>
-      !closed && resources.active && runtime.gate.ok && !!runtime.state;
+      !closed && resources.active && runtime.isAuthorized() && !!runtime.state;
     if (!permitted())
       return Promise.resolve({ ...funding.status(), gate: "closed" });
     if (fundingTask) return fundingTask;
@@ -178,7 +185,7 @@ export async function createEngine({
       }
       await runtime.tick({ advance });
       resources.active =
-        runtime.gate.ok &&
+        runtime.isAuthorized() &&
         !!runtime.state &&
         runtime.config.economy?.spendingEnabled === true;
       void internet.tick(runtime);

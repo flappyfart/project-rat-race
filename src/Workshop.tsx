@@ -9,6 +9,8 @@ import {
   DownloadSimple,
 } from "@phosphor-icons/react";
 import type { Status } from "./types";
+import Activity from "./Activity";
+import type { ActivityTelemetry, ActivityEvent } from "./Activity";
 type WorkshopState = {
   phase: string;
   reason: string;
@@ -24,7 +26,9 @@ type WorkshopState = {
     files: string[];
     url?: string;
   }>;
-  events: Array<{ type: string; detail: string; at: string }>;
+  events: ActivityEvent[];
+  cycles?: number;
+  activity?: ActivityTelemetry;
 };
 const empty: WorkshopState = {
   phase: "locked",
@@ -38,27 +42,35 @@ const empty: WorkshopState = {
   events: [],
 };
 export default function Workshop({ status }: { status: Status }) {
-  const [state, setState] = useState(empty);
+  const [state, setState] = useState(empty),
+    [unavailable, setUnavailable] = useState<string>();
   useEffect(() => {
-    let active = true;
+    let active = true,
+      busy = false;
     const abort = new AbortController();
     const poll = async () => {
+      if (busy) return;
+      busy = true;
       try {
         const r = await fetch("/api/workshop", {
           cache: "no-store",
           signal: abort.signal,
         });
-        if (!r.ok) throw new Error();
+        if (!r.ok) throw new Error(`workshop HTTP ${r.status}`);
         const d = await r.json();
         if (!Array.isArray(d.projects) || !Array.isArray(d.events))
-          throw new Error();
-        if (active) setState(d);
-      } catch {
+          throw new Error("invalid workshop response");
+        if (active) {
+          setState(d);
+          setUnavailable(undefined);
+        }
+      } catch (e) {
         if (active && !abort.signal.aborted)
-          setState({
-            ...empty,
-            reason: "workshop connection unavailable. actions remain locked.",
-          });
+          setUnavailable(
+            e instanceof Error ? e.message : "workshop connection unavailable",
+          );
+      } finally {
+        busy = false;
       }
     };
     void poll();
@@ -150,15 +162,17 @@ export default function Workshop({ status }: { status: Status }) {
               <DownloadSimple size={17} />
             </button>
           </div>
-          <div className="workshop-status">
-            <LockKey size={28} />
-            <h3>
-              {state.projects.length
-                ? "work in progress."
-                : "the work starts outside."}
-            </h3>
-            <p>{state.reason}</p>
-          </div>
+          <Activity
+            phase={status.phase === "paused" ? "paused" : state.phase}
+            reason={status.phase === "paused" ? status.reason : state.reason}
+            cycles={state.cycles}
+            activity={state.activity}
+            events={state.events}
+            unavailable={
+              unavailable ??
+              (status.phase === "error" ? status.reason : undefined)
+            }
+          />
           <div className="workshop-metrics">
             <div>
               <span>work previews</span>

@@ -29,6 +29,7 @@ const AtlasScene = lazy(() =>
 import { locked } from "./types";
 import type { Status } from "./types";
 import Workshop from "./Workshop";
+import { ActivityFrame, activityAge, useActivityClock } from "./Activity";
 import Manifesto from "./Manifesto";
 import Navigation from "./Navigation";
 import { ArrivalReveal, KineticHeadline } from "./Arrival";
@@ -200,32 +201,46 @@ export default function App() {
   }, []);
   useEffect(() => {
     const abort = new AbortController();
-    let active = true;
+    let active = true,
+      busy = false;
     async function poll() {
-      for (const path of ["internet", "economy"]) {
-        try {
-          const r = await fetch("/api/" + path, {
-            cache: "no-store",
-            signal: abort.signal,
-          });
-          if (!r.ok) throw new Error();
-          const d = await r.json();
-          if (!active) continue;
-          if (path === "internet") setConnection(d);
-          else setEconomy(d);
-        } catch {
-          if (!active || abort.signal.aborted) continue;
-          if (path === "internet")
-            setConnection({
-              ...noConnection,
-              reason: "observation connection unavailable",
+      if (busy) return;
+      busy = true;
+      try {
+        for (const path of ["internet", "economy"]) {
+          try {
+            const r = await fetch("/api/" + path, {
+              cache: "no-store",
+              signal: abort.signal,
             });
-          else
-            setEconomy({
-              ...noEconomy,
-              reason: "economy connection unavailable",
-            });
+            if (!r.ok) throw new Error(`${path} HTTP ${r.status}`);
+            const d = await r.json();
+            if (!active) continue;
+            if (path === "internet") {
+              if (!Array.isArray(d.events) || typeof d.phase !== "string")
+                throw new Error("invalid internet response");
+              setConnection(d);
+            } else setEconomy(d);
+          } catch (e) {
+            if (!active || abort.signal.aborted) continue;
+            if (path === "internet")
+              setConnection((previous) => ({
+                ...previous,
+                phase: "unavailable",
+                reason:
+                  e instanceof Error
+                    ? e.message
+                    : "observation connection unavailable",
+              }));
+            else
+              setEconomy({
+                ...noEconomy,
+                reason: "economy connection unavailable",
+              });
+          }
         }
+      } finally {
+        busy = false;
       }
     }
     void poll();
@@ -265,25 +280,41 @@ export default function App() {
     return () => ob.disconnect();
   }, []);
   const live = status.phase === "live";
+  const hasRecordedMaze =
+    !!status.startedAt && !!status.maze && status.totalSteps > 0;
   const frameUrl = /^\/api\/browser-frame\?frame=[a-f0-9]{64}$/.test(
     connection.screenshotUrl ?? "",
   )
     ? connection.screenshotUrl
     : null;
   const frameFailed = !!frameUrl && failedFrame === frameUrl;
+  const now = useActivityClock();
   const browserStale =
     !connection.lastObservedAt ||
     !Number.isFinite(Date.parse(connection.lastObservedAt)) ||
-    Date.now() - Date.parse(connection.lastObservedAt) > 45000;
+    now - Date.parse(connection.lastObservedAt) > 45000;
   const browserLabel = !live
-    ? "awaiting verified launch"
+    ? status.phase === "paused"
+      ? "experiment paused"
+      : status.phase === "error"
+        ? "status unavailable"
+        : "awaiting verified launch"
     : connection.phase !== "observing"
       ? "observer offline"
       : frameFailed
         ? "frame unavailable"
         : browserStale
           ? "observation stale"
-          : "recorded browser feed";
+          : "recorded sensory snapshot";
+  const browserReason = !live
+    ? status.reason
+    : connection.phase !== "observing"
+      ? connection.reason
+      : frameFailed
+        ? "the recorded frame could not be loaded"
+        : browserStale
+          ? "no fresh sensory frame received within 45 seconds"
+          : null;
   const exportRecord = async () => {
     setExportError("");
     try {
@@ -348,7 +379,7 @@ export default function App() {
                 </span>
                 <span className="state-label">
                   <LockKey size={13} />
-                  {live ? "active" : "sealed"}
+                  {live ? "active" : hasRecordedMaze ? "paused" : "sealed"}
                 </span>
               </div>
               <Suspense
@@ -367,14 +398,19 @@ export default function App() {
                   </div>
                 }
               >
-                <MazeScene theme={theme} maze={live ? status.maze : null} />
+                <MazeScene
+                  theme={theme}
+                  maze={hasRecordedMaze ? status.maze : null}
+                />
               </Suspense>
               <div className="apparatus-foot">
                 <span>
-                  {live
+                  {hasRecordedMaze
                     ? status.experimentPhase === "escaped"
                       ? "last verified maze state. exit recorded."
-                      : "authoritative experiment state"
+                      : live
+                        ? "authoritative experiment state"
+                        : "last verified maze state. experiment paused."
                     : "reference apparatus. no experiment running."}
                 </span>
                 <span>spatial navigation</span>
@@ -389,7 +425,13 @@ export default function App() {
                 <LockKey size={15} />
               </div>
               <div className="launch-message">
-                the maze starts after the contract goes live.
+                {status.experimentPhase === "escaped"
+                  ? "the exit is recorded. follow the agent in beyond."
+                  : hasRecordedMaze
+                    ? live
+                      ? "the official experiment is running."
+                      : "the saved experiment is paused."
+                    : "the maze starts after the contract goes live."}
               </div>
               <button
                 className="inline-link"
@@ -555,7 +597,8 @@ export default function App() {
             <div className="connection-heading">
               <h2>observe the connection.</h2>
               <p className="body-muted">
-                one shared browser. recorded frames and actions.
+                independent wikipedia sensory snapshots. AI research and tool
+                work appear in the workshop below.
               </p>
             </div>
             <div
@@ -616,12 +659,14 @@ export default function App() {
                     </span>
                     <Broadcast size={16} />
                   </div>
-                  {frameUrl && live && !frameFailed ? (
-                    <img
-                      key={frameUrl}
-                      className="browser-capture"
-                      src={frameUrl}
-                      alt={`recorded browser page: ${connection.title ?? "untitled page"}`}
+                  {frameUrl && !frameFailed ? (
+                    <ActivityFrame
+                      url={frameUrl}
+                      title={connection.title}
+                      reason={browserReason}
+                      label={browserLabel}
+                      at={connection.lastObservedAt}
+                      now={now}
                       onError={() => setFailedFrame(frameUrl)}
                     />
                   ) : (
@@ -650,17 +695,15 @@ export default function App() {
                     </div>
                   )}
                   <p className="browser-frame-note">
-                    {!live
-                      ? "read only. the shared browser remains sealed until launch."
-                      : connection.phase !== "observing"
-                        ? "observer offline. any image shown is the last recorded frame."
-                        : browserStale
-                          ? "observation is stale. this is not a current view."
-                          : "recorded snapshots, not video. no visitor control."}
+                    {browserReason ??
+                      "independent sensory snapshots, not video or evidence of AI work. no visitor control."}{" "}
+                    · last frame {connection.lastObservedAt ?? "unavailable"} ·{" "}
+                    {activityAge(connection.lastObservedAt, now)}
                   </p>
                   <div className="browser-stats">
                     <span>
-                      pages visited <strong>{connection.pagesOpened}</strong>
+                      pages this session{" "}
+                      <strong>{connection.pagesOpened}</strong>
                     </span>
                     <span>
                       last observation{" "}

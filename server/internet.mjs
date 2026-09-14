@@ -207,11 +207,16 @@ export class InternetObserver {
   }
   async tick(runtime) {
     if (
-      !runtime.gate.ok ||
+      !(runtime.isAuthorized?.() ?? runtime.gate.ok) ||
       !runtime.state ||
       runtime.config.internet?.enabled !== true
     ) {
-      if (this.browser) await this.stop("experiment gate is closed");
+      if (this.browser)
+        await this.stop(
+          runtime.status?.().reason ??
+            runtime.gate.reason ??
+            "experiment gate is closed",
+        );
       return;
     }
     if (this.busy || this.now() - this.lastTick < 15000) return;
@@ -304,8 +309,12 @@ export class InternetObserver {
           })
           .map((n) => n.href),
       );
-      if (!runtime.gate.ok || !runtime.state) {
-        await this.stop("experiment gate is closed");
+      if (!(runtime.isAuthorized?.() ?? runtime.gate.ok) || !runtime.state) {
+        await this.stop(
+          runtime.status?.().reason ??
+            runtime.gate.reason ??
+            "experiment gate is closed",
+        );
         return;
       }
       const decision = adapterDecision(

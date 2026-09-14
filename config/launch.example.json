@@ -3,7 +3,8 @@
   "chainId": 4663,
   "contract": null,
   "launchTx": null,
-  "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+  "rpcUrl": "https://robinhood-rpc.publicnode.com",
+  "rpcFallbackUrls": ["https://rpc.mainnet.chain.robinhood.com"],
   "minConfirmations": 12,
   "market": {
     "kind": "dex_reference",

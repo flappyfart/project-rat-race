@@ -65,12 +65,36 @@ export class Runtime {
     this.config = await readConfig(this.configPath);
     return this;
   }
+  isAuthorized() {
+    return (
+      this.gate.ok === true &&
+      (!this.gate.verificationExpiresAt ||
+        Date.now() < this.gate.verificationExpiresAt)
+    );
+  }
   async tick({ advance = true } = {}) {
     if (this.busy || this.fatal) return;
     this.busy = true;
     try {
       this.config = await readConfig(this.configPath);
+      if (this.gate.ok && !this.isAuthorized())
+        this.gate = {
+          ...this.gate,
+          ok: false,
+          phase: this.state ? "paused" : "verification_pending",
+          reason: "chain verification refresh pending",
+        };
       this.gate = await verifyLaunch(this.config, this.dependencies);
+      if (this.gate.ok && this.dependencies.launchFreshUntil) {
+        this.gate.verificationExpiresAt = this.dependencies.launchFreshUntil();
+        if (!this.isAuthorized())
+          this.gate = {
+            ...this.gate,
+            ok: false,
+            phase: "verification_pending",
+            reason: "chain verification expired during refresh",
+          };
+      }
       this.updatedAt = new Date().toISOString();
       if (!this.gate.ok) {
         if (this.state) this.gate.phase = "paused";
@@ -167,6 +191,7 @@ export class Runtime {
     }
   }
   status() {
+    const expired = this.gate.ok && !this.isAuthorized();
     return {
       experimentPhase: !this.state
         ? "sealed"
@@ -180,8 +205,12 @@ export class Runtime {
             hash: this.state.escape.hash,
           }
         : null,
-      phase: this.gate.phase,
-      reason: this.gate.reason,
+      phase: expired
+        ? this.state
+          ? "paused"
+          : "verification_pending"
+        : this.gate.phase,
+      reason: expired ? "chain verification refresh pending" : this.gate.reason,
       chainId: CHAIN_ID,
       quoteAsset: "ETH",
       contract: validAddress(this.config.contract)

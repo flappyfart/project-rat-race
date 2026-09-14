@@ -1,0 +1,103 @@
+.agent-activity {
+  padding: 24px 0;
+  overflow-wrap: anywhere;
+}
+.agent-activity h3 {
+  margin-bottom: 12px;
+}
+.agent-activity h4 {
+  margin-top: 28px;
+}
+.activity-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  margin: 18px 0;
+}
+.activity-facts span,
+.activity-event time {
+  font-size: 12px;
+}
+.activity-facts strong {
+  display: block;
+  font-size: 20px;
+  margin-top: 6px;
+}
+.activity-event {
+  padding: 16px 0;
+  border-top: 1px solid currentColor;
+}
+.activity-event time,
+.activity-event strong {
+  display: block;
+}
+.activity-event time {
+  opacity: 0.65;
+  margin-bottom: 8px;
+}
+.activity-event p {
+  margin: 8px 0;
+}
+.activity-event summary {
+  font-size: 12px;
+  cursor: pointer;
+}
+.activity-intent {
+  border-left: 2px solid currentColor;
+  padding-left: 12px;
+}
+.browser-frame-wrap {
+  position: relative;
+}
+.browser-frame-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(12, 16, 18, 0.83);
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+.browser-frame-overlay strong {
+  font-size: 22px;
+}
+.browser-frame-overlay p {
+  margin: 12px 0;
+}
+.browser-frame-overlay time {
+  font-size: 12px;
+}
+.browser-frame-note {
+  overflow-wrap: anywhere;
+}
+.observation-panel > * {
+  min-width: 0;
+}
+.browser-observation {
+  min-width: 0;
+  width: 100%;
+}
+.browser-stats {
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.browser-stats > span {
+  white-space: normal;
+}
+.observation-log {
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .browser-frame-overlay {
+    padding: 14px;
+  }
+  .browser-frame-overlay strong {
+    font-size: 17px;
+  }
+  .browser-frame-overlay p,
+  .browser-frame-overlay time {
+    font-size: 11px;
+  }
+}
