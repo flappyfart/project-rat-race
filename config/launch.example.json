@@ -1,0 +1,30 @@
+{
+  "enabled": false,
+  "chainId": 4663,
+  "contract": null,
+  "launchTx": null,
+  "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+  "minConfirmations": 12,
+  "market": {
+    "kind": "dex_reference",
+    "url": null,
+    "sourceId": null,
+    "assetContract": null,
+    "identityProvenance": "",
+    "operatorVerified": false,
+    "maxAgeSeconds": 120,
+    "minLiquidityUsd": 10000
+  },
+  "internet": {
+    "enabled": false,
+    "seedUrl": "https://en.wikipedia.org/wiki/Rat",
+    "executablePath": null
+  },
+  "economy": {
+    "treasury": null,
+    "spendingEnabled": false,
+    "maxIntentWei": "4000000000000000",
+    "approvedRecipients": []
+  },
+  "seed": 4663
+}

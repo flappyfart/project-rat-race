@@ -1,0 +1,21 @@
+minimumLimaVersion: 2.0.0
+base:
+  - template:_images/ubuntu-lts
+vmType: vz
+arch: aarch64
+cpus: 2
+memory: 2GiB
+disk: 12GiB
+mounts: []
+mountType: virtiofs
+ssh:
+  loadDotSSHPubKeys: false
+  forwardAgent: false
+  forwardX11: false
+containerd:
+  system: true
+  user: false
+propagateProxyEnv: false
+portForwards:
+  - guestPortRange: [1, 65535]
+    ignore: true

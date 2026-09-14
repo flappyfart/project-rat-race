@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.cache/
+artifacts/
+server/state/
+config/launch.json
+.env*
+*.tsbuildinfo
+.DS_Store
+*.keystore*
+*private-key*
+*tunnel-token*
