@@ -385,6 +385,9 @@ export default memo(function HardwareStage({
             src={"/assets/hardware-fallback-" + theme + ".jpg"}
             alt=""
             fetchPriority="high"
+            onLoad={() =>
+              document.getElementById("hardware-first-paint")?.remove()
+            }
           />
         </picture>
         <div
