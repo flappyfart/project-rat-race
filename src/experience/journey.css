@@ -1,0 +1,332 @@
+/* One original hardware world under a normal, accessible document.
+   The sidebar is a separate instrument rail; dense live records stay on solid surfaces. */
+.hardware-layout {
+  isolation: isolate;
+}
+.hardware-main {
+  position: relative;
+  z-index: 1;
+  overflow-x: clip;
+}
+.hardware-layout .site-footer {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+}
+.hardware-main .hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  position: relative;
+  min-height: 100dvh;
+  max-width: none;
+  padding: 80px 6% 35px;
+  gap: 0;
+  background: transparent;
+}
+.hardware-main .hero-copy {
+  width: 43%;
+  max-width: 500px;
+  padding: 0 0 100px;
+  position: relative;
+  z-index: 1;
+}
+.hardware-main .hero-copy:before,
+.journey-copy:before {
+  content: "";
+  position: absolute;
+  inset: -35px -45px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--bg) 98%, transparent) 28%,
+    color-mix(in srgb, var(--bg) 80%, transparent) 53%,
+    transparent 76%
+  );
+}
+.hardware-main .hero h1 {
+  font-size: clamp(52px, 5.2vw, 84px);
+  letter-spacing: -0.065em;
+  line-height: 0.98;
+  margin: 28px 0;
+}
+.hardware-main .hero-description {
+  font-size: 18px;
+  line-height: 1.6;
+}
+.hardware-main .hero-bottom {
+  position: absolute;
+  bottom: 38px;
+  left: 6%;
+  right: 6%;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  background: transparent;
+  font-size: 11px;
+}
+.hardware-main .hero-bottom .launch-message {
+  flex: 1;
+}
+.hardware-main .hero-bottom .inline-link {
+  font-size: 11px;
+}
+.hardware-main .journey-chapter {
+  position: relative;
+  min-height: 100dvh;
+  padding: 100px 6%;
+  display: flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  max-width: none;
+}
+.hardware-main .journey-copy {
+  position: relative;
+  isolation: isolate;
+  width: min(43%, 490px);
+  padding: 26px 0;
+}
+.hardware-main .journey-copy h2 {
+  font-size: clamp(43px, 4.3vw, 68px);
+  line-height: 1.02;
+  letter-spacing: -0.06em;
+  margin-bottom: 26px;
+}
+.hardware-main .journey-copy p {
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: 30ch;
+}
+.hardware-main .journey-copy .body-muted {
+  font-size: 14px;
+  margin-top: 20px;
+}
+.hardware-main .journey-copy .inline-link {
+  margin-top: 22px;
+}
+.hardware-main .maze-chapter {
+  min-height: 110dvh;
+  align-items: flex-end;
+  padding-bottom: 16vh;
+}
+.hardware-main .maze-chapter .journey-copy {
+  width: min(30%, 340px);
+}
+.hardware-main .maze-chapter .journey-copy h2 {
+  font-size: clamp(38px, 3.5vw, 54px);
+}
+.hardware-main .maze-chapter .journey-copy p {
+  font-size: 15px;
+}
+.hardware-main .maze-state {
+  font-family: var(--mono);
+  font-size: 10px !important;
+  line-height: 1.7 !important;
+  color: var(--muted);
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.hardware-main .anatomy-section {
+  position: relative;
+  min-height: 105dvh;
+  align-items: center;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  padding-top: 90px;
+  padding-bottom: 90px;
+  border-top: 1px solid var(--line);
+}
+.hardware-main .anatomy-copy {
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  padding: 28px 0;
+}
+.hardware-main .anatomy-visual {
+  background: var(--panel);
+}
+.hardware-main .system-flow {
+  background: var(--bg);
+  position: relative;
+  z-index: 1;
+}
+.hardware-main .connection-section {
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  position: relative;
+  z-index: 1;
+  padding-top: 90px;
+}
+.hardware-main .observation-panel {
+  background: var(--panel);
+}
+.hardware-main .beyond-section {
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  position: relative;
+  z-index: 1;
+}
+.hardware-main .manifesto-section,
+.hardware-main .protocol-section,
+.hardware-main .project-records,
+.hardware-main .closing {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+}
+@media (min-width: 1700px) {
+  .hardware-main .hero-copy {
+    max-width: 550px;
+  }
+  .hardware-main .hero h1 {
+    font-size: 92px;
+  }
+  .hardware-main .journey-copy {
+    max-width: 540px;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1200px) {
+  .hardware-main .hero h1 {
+    font-size: 52px;
+  }
+  .hardware-main .hero-copy {
+    width: 47%;
+    padding-bottom: 110px;
+  }
+  .hardware-main .journey-copy {
+    width: 45%;
+  }
+  .hardware-main .journey-copy h2 {
+    font-size: 46px;
+  }
+  .hardware-main .journey-copy p {
+    font-size: 15px;
+  }
+  .hardware-main .hero-bottom {
+    bottom: 30px;
+    gap: 12px;
+  }
+  .hardware-main .hero-bottom .launch-message {
+    flex-basis: 100%;
+    order: 2;
+  }
+}
+@media (max-width: 1023px) {
+  .hardware-main .hero {
+    min-height: calc(115dvh - 70px);
+    padding: 26px 6% 105px;
+    justify-content: flex-start;
+  }
+  .hardware-main .hero-copy {
+    width: 100%;
+    max-width: 470px;
+    padding: 0;
+  }
+  .hardware-main .hero-copy:before {
+    inset: -25px -30px;
+    opacity: 0.94;
+  }
+  .hardware-main .hero h1 {
+    font-size: clamp(53px, 10vw, 82px);
+    line-height: 1;
+    max-width: 90vw;
+  }
+  .hardware-main .hero-description {
+    font-size: 15px;
+    margin-bottom: 22px;
+  }
+  .hardware-main .hero .primary-link {
+    padding: 13px 17px;
+    min-height: 45px;
+    font-size: 12px;
+  }
+  .hardware-main .hero-bottom {
+    bottom: 18px;
+    gap: 10px;
+    left: 6%;
+    right: 6%;
+    font-size: 10px;
+    padding-top: 14px;
+  }
+  .hardware-main .hero-bottom .launch-message {
+    flex-basis: 100%;
+    order: 2;
+    font-size: 10px;
+  }
+  .hardware-main .journey-chapter {
+    min-height: 110dvh;
+    padding: 50px 6%;
+    align-items: flex-start;
+  }
+  .hardware-main .journey-copy {
+    width: 100%;
+    max-width: 430px;
+    padding: 0;
+  }
+  .hardware-main .journey-copy h2 {
+    font-size: clamp(40px, 8.7vw, 65px);
+    margin-bottom: 20px;
+  }
+  .hardware-main .journey-copy p {
+    font-size: 15px;
+    max-width: 34ch;
+  }
+  .hardware-main .journey-copy:before {
+    inset: -25px -20px;
+    background: linear-gradient(
+      var(--bg) 25%,
+      color-mix(in srgb, var(--bg) 92%, transparent) 65%,
+      transparent
+    );
+  }
+  .hardware-main .maze-chapter {
+    min-height: 115dvh;
+    align-items: flex-end;
+    padding-bottom: 110px;
+  }
+  .hardware-main .maze-chapter .journey-copy {
+    width: 100%;
+    max-width: 380px;
+  }
+  .hardware-main .maze-chapter .journey-copy:before {
+    background: linear-gradient(
+      transparent,
+      color-mix(in srgb, var(--bg) 94%, transparent) 30%,
+      var(--bg) 75%
+    );
+  }
+  .hardware-main .anatomy-section {
+    min-height: 0;
+    padding-top: 65px;
+    padding-bottom: 65px;
+  }
+  .hardware-main .hero .eyebrow {
+    font-size: 8px;
+  }
+  .hardware-main .connection-section {
+    padding-top: 65px;
+  }
+}
+@media (max-width: 380px) {
+  .hardware-main .hero h1 {
+    font-size: 53px;
+  }
+  .hardware-main .hero .eyebrow {
+    font-size: 7px;
+    letter-spacing: 0.04em;
+  }
+  .hardware-main .journey-copy h2 {
+    font-size: 40px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hardware-main .hero-copy:before,
+  .hardware-main .journey-copy:before {
+    opacity: 1;
+  }
+  .hardware-main .journey-chapter {
+    min-height: 75dvh;
+  }
+}

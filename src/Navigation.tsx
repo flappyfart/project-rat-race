@@ -254,7 +254,7 @@ export default function Navigation({
           <a
             className="rail-brand"
             href="#top"
-            aria-label="project rat race home"
+            aria-label="r. project rat race home"
           >
             <span className="rail-mark" aria-hidden="true">
               r.
@@ -328,7 +328,7 @@ export default function Navigation({
         <a
           className="rail-brand"
           href="#top"
-          aria-label="project rat race home"
+          aria-label="r. project rat race home"
         >
           <span className="rail-mark" aria-hidden="true">
             r.

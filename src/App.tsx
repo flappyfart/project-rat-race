@@ -20,9 +20,7 @@ import {
   Copy,
   Broadcast,
 } from "@phosphor-icons/react";
-const MazeScene = lazy(() =>
-  import("./Scenes").then((m) => ({ default: m.MazeScene })),
-);
+const HardwareStage = lazy(() => import("./experience/HardwareStage"));
 const AtlasScene = lazy(() =>
   import("./Scenes").then((m) => ({ default: m.AtlasScene })),
 );
@@ -33,6 +31,8 @@ import { ActivityFrame, activityAge, useActivityClock } from "./Activity";
 import Manifesto from "./Manifesto";
 import Navigation from "./Navigation";
 import { ArrivalReveal, KineticHeadline } from "./Arrival";
+import "./experience/journey.css";
+import "./experience/hardware-stage.css";
 
 type Theme = "light" | "dark";
 type Connection = {
@@ -362,9 +362,29 @@ export default function App() {
         onCopy={copy}
         copied={copied}
       />
-      <div className="page-content">
+      <div className="page-content hardware-layout">
         <ArrivalReveal />
-        <main id="main">
+        <Suspense
+          fallback={
+            <div className="hardware-backdrop" aria-hidden="true">
+              <picture>
+                <source
+                  media="(max-width: 720px)"
+                  srcSet={"/assets/hardware-fallback-mobile-" + theme + ".jpg"}
+                />
+                <img
+                  className="hardware-fallback"
+                  src={"/assets/hardware-fallback-" + theme + ".jpg"}
+                  alt=""
+                  fetchPriority="high"
+                />
+              </picture>
+            </div>
+          }
+        >
+          <HardwareStage theme={theme} status={status} />
+        </Suspense>
+        <main id="main" className="hardware-main">
           <section id="top" className="hero">
             <div className="hero-copy">
               <div className="eyebrow">
@@ -377,53 +397,9 @@ export default function App() {
                 <br />
                 an experiment that remembers.
               </p>
-              <a className="primary-link" href="#anatomy">
+              <a className="primary-link" href="#machine">
                 inside the experiment <ArrowDown size={19} />
               </a>
-            </div>
-            <div className="hero-apparatus">
-              <div className="apparatus-caption">
-                <span>
-                  <Flask size={16} /> observation chamber
-                </span>
-                <span className="state-label">
-                  <LockKey size={13} />
-                  {live ? "active" : hasRecordedMaze ? "paused" : "sealed"}
-                </span>
-              </div>
-              <Suspense
-                fallback={
-                  <div className="scene-wrap">
-                    <img
-                      className="maze-fallback-image"
-                      src={
-                        theme === "dark"
-                          ? "/assets/maze-dark.jpg"
-                          : "/assets/maze-light.jpg"
-                      }
-                      alt="static view of the sealed reference apparatus"
-                      fetchPriority="high"
-                    />
-                  </div>
-                }
-              >
-                <MazeScene
-                  theme={theme}
-                  maze={hasRecordedMaze ? status.maze : null}
-                />
-              </Suspense>
-              <div className="apparatus-foot">
-                <span>
-                  {hasRecordedMaze
-                    ? status.experimentPhase === "escaped"
-                      ? "last verified maze state. exit recorded."
-                      : live
-                        ? "authoritative experiment state"
-                        : "last verified maze state. experiment paused."
-                    : "reference apparatus. no experiment running."}
-                </span>
-                <span>spatial navigation</span>
-              </div>
             </div>
             <div className="hero-bottom">
               <div className="launch-state">
@@ -450,31 +426,48 @@ export default function App() {
               </button>
             </div>
           </section>
-          <section className="premise section-pad" data-reveal>
-            <div className="premise-heading">
-              <span className="section-symbol">
-                <Fingerprint weight="light" size={48} />
-              </span>
+          <section id="machine" className="journey-chapter machine-chapter">
+            <div className="journey-copy">
               <h2>
                 they keep moving
                 <br />
                 the cheese.
               </h2>
-            </div>
-            <div className="premise-body">
               <p>
                 markets change the conditions.
                 <br />
                 experience changes the rat.
               </p>
               <p className="body-muted">
-                project rat race studies a simple question: can a persistent
-                navigation model adapt to an environment that will not stand
-                still.
+                the case opens. underneath, a world of pathways, constraints,
+                and decisions.
               </p>
-              <a href="#protocol" className="inline-link">
-                read the experimental protocol <ArrowUpRight size={17} />
+              <a href="#maze" className="inline-link">
+                enter the maze <ArrowDown size={17} />
               </a>
+            </div>
+          </section>
+          <section id="maze" className="journey-chapter maze-chapter">
+            <div className="journey-copy">
+              <h2>
+                the chip is
+                <br />
+                the maze.
+              </h2>
+              <p>
+                a digital rat learns its route.
+                <br />
+                you only change the view.
+              </p>
+              <p className="maze-state">
+                {hasRecordedMaze
+                  ? status.experimentPhase === "escaped"
+                    ? "verified exit recorded. the saved route is preserved."
+                    : live
+                      ? "recorded experiment state. camera movement does not direct the rat."
+                      : "last verified state. the experiment is paused."
+                  : "reference maze. the official experiment has not started."}
+              </p>
             </div>
           </section>
           <section
