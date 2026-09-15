@@ -27,6 +27,7 @@ import {
   CreditWaitError,
 } from "./credit-guard.mjs";
 import { RpcPool, RH_RPC, RH_RPC_FALLBACK } from "./rpc-pool.mjs";
+import { usdToMicrosCeil } from "./compute-budget.mjs";
 const RH = "https://rpc.mainnet.chain.robinhood.com",
   BASE = "https://mainnet.base.org",
   VENICE = "https://api.venice.ai";
@@ -61,8 +62,10 @@ export class WalletTransport {
     rpcUrl = RH_RPC,
     rpcFallbackUrls = [RH_RPC_FALLBACK],
     rpcFetch = fetch,
+    computeBudget,
     canSpend = () => false,
   } = {}) {
+    this.computeBudget = computeBudget;
     this.privateRoot = privateRoot;
     this.root = root ?? path.join(privateRoot, "finance-v1", "transport");
     this.model = model;
@@ -680,7 +683,16 @@ export class WalletTransport {
     maxTokens = 3500,
     responseFormat = { type: "json_object" },
     requestId,
+    budgetChannel = "agent",
+    timeoutMs = 180000,
   }) {
+    if (
+      !Number.isInteger(timeoutMs) ||
+      timeoutMs < 1 ||
+      timeoutMs > 180000 ||
+      !["agent", "chat"].includes(budgetChannel)
+    )
+      throw Error("AI request bounds exceeded");
     const admission = await this.preflight();
     if (!admission.ready) throw new CreditWaitError(admission.reason);
     return this.exclusive(async () => {
@@ -729,81 +741,106 @@ export class WalletTransport {
           "waiting for verified refill before starting another paid request",
         );
       const resource = "/api/v1/chat/completions",
-        r = await this.json(VENICE + resource, {
-          timeoutMs: 180000,
+        auth = await this.auth(resource),
+        body = JSON.stringify({
+          model: this.model,
+          messages,
+          max_tokens: maxTokens,
+          response_format: responseFormat,
+          temperature: 0.3,
+          venice_parameters: {
+            include_venice_system_prompt: false,
+            disable_thinking: true,
+            strip_thinking_response: true,
+          },
+        }),
+        computeBudget = this.computeBudget,
+        reservation = computeBudget
+          ? await computeBudget.reserve({
+              id: requestId,
+              channel: budgetChannel,
+              maximumUsdMicros: "20000",
+            })
+          : null;
+      let finalized = false;
+      try {
+        const r = await this.json(VENICE + resource, {
+          timeoutMs,
           method: "POST",
           headers: {
             "content-type": "application/json",
-            "X-Sign-In-With-X": await this.auth(resource),
+            "X-Sign-In-With-X": auth,
           },
-          body: JSON.stringify({
-            model: this.model,
-            messages,
-            max_tokens: maxTokens,
-            response_format: responseFormat,
-            temperature: 0.3,
-            venice_parameters: {
-              include_venice_system_prompt: false,
-              disable_thinking: true,
-              strip_thinking_response: true,
-            },
-          }),
+          body,
         });
-      if (r.status === 402) {
-        this.creditGuard?.requestRefill();
-        throw new CreditWaitError(
-          "provider declined available credit. work is saved while funding is checked",
+        if (r.status === 402) {
+          this.creditGuard?.requestRefill();
+          throw new CreditWaitError(
+            "provider declined available credit. work is saved while funding is checked",
+          );
+        }
+        if (!r.ok) throw Error("AI request failed with HTTP " + r.status);
+        const response = r.data;
+        if (
+          response.choices?.[0]?.finish_reason !== "stop" ||
+          typeof response.choices?.[0]?.message?.content !== "string"
+        )
+          throw Error("AI output incomplete");
+        let charge;
+        for (let n = 0; n < 4; n++) {
+          const ledger = await this.veniceRead(
+            "/api/v1/x402/transactions/" + this.address + "?limit=50&offset=0",
+          );
+          charge = ledger.transactions?.find(
+            (x) => x.type === "CHARGE" && x.requestId === response.id,
+          );
+          if (charge) break;
+          await new Promise((r) => setTimeout(r, 500));
+        }
+        if (
+          !charge ||
+          !Number.isFinite(Number(charge.amount)) ||
+          Number(charge.amount) >= 0 ||
+          Math.abs(Number(charge.amount)) > 0.02
+        )
+          throw Error("AI billing confirmation unavailable or above ceiling");
+        if (reservation) {
+          await computeBudget.settle(reservation, {
+            actualUsdMicros: usdToMicrosCeil(
+              String(charge.amount).replace(/^-/, ""),
+            ),
+          });
+          finalized = true;
+        }
+        this.ready = true;
+        await durable(
+          path.join(
+            this.root,
+            "inference",
+            String(requestId ?? response.id).replace(/[^a-zA-Z0-9-]/g, "") +
+              ".json",
+          ),
+          {
+            at: Date.now(),
+            requestId: response.id,
+            model: response.model,
+            usage: response.usage,
+            costUsd: Math.abs(Number(charge.amount)),
+            ledgerId: charge.id,
+          },
         );
-      }
-      if (!r.ok) throw Error("AI request failed with HTTP " + r.status);
-      const response = r.data;
-      if (
-        response.choices?.[0]?.finish_reason !== "stop" ||
-        typeof response.choices?.[0]?.message?.content !== "string"
-      )
-        throw Error("AI output incomplete");
-      let charge;
-      for (let n = 0; n < 4; n++) {
-        const ledger = await this.veniceRead(
-          "/api/v1/x402/transactions/" + this.address + "?limit=50&offset=0",
-        );
-        charge = ledger.transactions?.find(
-          (x) => x.type === "CHARGE" && x.requestId === response.id,
-        );
-        if (charge) break;
-        await new Promise((r) => setTimeout(r, 500));
-      }
-      if (
-        !charge ||
-        !Number.isFinite(Number(charge.amount)) ||
-        Number(charge.amount) >= 0 ||
-        Math.abs(Number(charge.amount)) > 0.02
-      )
-        throw Error("AI billing confirmation unavailable or above ceiling");
-      this.ready = true;
-      await durable(
-        path.join(
-          this.root,
-          "inference",
-          String(requestId ?? response.id).replace(/[^a-zA-Z0-9-]/g, "") +
-            ".json",
-        ),
-        {
-          at: Date.now(),
-          requestId: response.id,
-          model: response.model,
+        return {
+          text: response.choices[0].message.content,
           usage: response.usage,
           costUsd: Math.abs(Number(charge.amount)),
-          ledgerId: charge.id,
-        },
-      );
-      return {
-        text: response.choices[0].message.content,
-        usage: response.usage,
-        costUsd: Math.abs(Number(charge.amount)),
-        requestId: response.id,
-        model: response.model,
-      };
+          requestId: response.id,
+          model: response.model,
+        };
+      } catch (e) {
+        if (reservation && !finalized)
+          await computeBudget.fail(reservation, { knownUnspent: false });
+        throw e;
+      }
     });
   }
 }

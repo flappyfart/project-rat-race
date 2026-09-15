@@ -278,7 +278,7 @@ export class AgentLoop {
     if (!authorized) throw Error("agent authorization missing");
     if (this.busy) return this.status();
     this.busy = true;
-    let lease;
+    let lease, computeReservation;
     try {
       await this.restore();
       if (this.now() < this.state.nextAt) {
@@ -365,6 +365,11 @@ export class AgentLoop {
       this.record.executionStatus = "connected";
       const id = randomUUID();
       this.state.pending = { id, stage: "requesting", startedAt: this.now() };
+      computeReservation = {
+        day,
+        costUsd: budget.costUsd,
+        requests: budget.requests,
+      };
       budget.requests++;
       budget.costUsd += 0.02;
       await save(this.file, this.state);
@@ -502,6 +507,29 @@ export class AgentLoop {
       this.currentIntent = null;
       return this.status();
     } catch (e) {
+      if (
+        e.code === "COMPUTE_BUDGET_WAIT" &&
+        e.knownUnspent === true &&
+        computeReservation &&
+        this.state.pending?.stage === "requesting"
+      ) {
+        const { day, costUsd, requests } = computeReservation;
+        Object.assign(this.state.days[day], { costUsd, requests });
+        this.state.pending = null;
+        this.currentIntent = null;
+        this.state.nextAt =
+          this.now() +
+          Math.max(
+            1000,
+            Math.min(24 * 60 * 60 * 1000, e.retryAfterMs ?? 60000),
+          );
+        this.setActivity(
+          "resting",
+          "daily shared compute allowance reached; waiting for next utc day",
+        );
+        if (this.loaded && lease) await save(this.file, this.state);
+        return this.status();
+      }
       if (e.code === "CREDIT_WAIT") {
         this.setActivity(
           "waiting_for_credits",

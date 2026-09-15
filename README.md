@@ -20,6 +20,10 @@ The canonical launch transaction anchors the token's launch evidence. Operator a
 
 Public checkouts still default to an explicitly disabled waiting mode. They cannot activate or spend merely by being opened, and no operator settings or financial records are shipped. Wallets and financial history remain separate from simulation state.
 
+## talk to the rat
+
+The [public chat](https://projectratrace.org/#talk) is a read-only AI voice grounded in whitelisted live experiment facts. Visitor messages do not enter the autonomous agent's memory or control tools, signing or the maze. The interface retains bounded tab-local history and sends messages to its model provider. Public chat shares the existing daily compute ceiling, with its own smaller sublimit and gateway/rate/replay protections. See [chat architecture](docs/rat-chat.md).
+
 ## what this repository contains
 
 This is the official public source release of Project Rat Race. It includes the website, navigation controller, market adapter, browser observation layer, AI agent loop, isolated execution interface, credit protection, narrow payment verification, and automated tests.

@@ -1,4 +1,5 @@
 import http from "node:http";
+import { serveRatChat } from "./chat-http.mjs";
 import { readFile, realpath, stat } from "node:fs/promises";
 import path from "node:path";
 import { gzip } from "node:zlib";
@@ -35,10 +36,6 @@ export function createHandler(runtime, distPath, services = {}) {
       });
       res.end(JSON.stringify(body));
     };
-    if (req.method !== "GET") {
-      res.setHeader("allow", "GET");
-      return json(405, { error: "read-only server; get required" });
-    }
     // Reject unexpected host headers to reduce DNS-rebinding exposure. No CORS.
     if (!/^(?:127\.0\.0\.1|localhost)(?::\d+)?$/.test(req.headers.host ?? ""))
       return json(403, { error: "loopback host required" });
@@ -54,6 +51,11 @@ export function createHandler(runtime, distPath, services = {}) {
         throw new Error();
     } catch {
       return json(400, { error: "unsafe request path" });
+    }
+    if (pathname === "/api/rat-chat") return serveRatChat(req, res, services);
+    if (req.method !== "GET") {
+      res.setHeader("allow", "GET");
+      return json(405, { error: "only the public chat route accepts posts" });
     }
     if (pathname === "/api/work")
       return json(200, {

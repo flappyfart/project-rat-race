@@ -3,6 +3,7 @@ import {
   ArrowUpRight,
   Brain,
   CaretDown,
+  ChatCircle,
   Check,
   Code,
   Copy,
@@ -28,6 +29,7 @@ const sections = [
   { id: "anatomy", label: "anatomy", icon: Brain },
   { id: "connection", label: "connection", icon: GlobeHemisphereWest },
   { id: "beyond", label: "beyond", icon: Code },
+  { id: "talk", label: "talk", icon: ChatCircle },
   { id: "manifesto", label: "manifesto", icon: Fingerprint },
   { id: "protocol", label: "protocol", icon: FileText },
 ];

@@ -12,6 +12,8 @@ import { AgentLoop } from "./agent-loop.mjs";
 import { InternetObserver } from "./internet.mjs";
 import { Publications } from "./publications.mjs";
 import { CreditGuard } from "./credit-guard.mjs";
+import { ComputeBudget } from "./compute-budget.mjs";
+import { RatChat } from "./rat-chat.mjs";
 export async function createEngine({
   configPath,
   stateRoot,
@@ -135,7 +137,78 @@ export async function createEngine({
     policy: { refillAtUsdMicros: funding.status().policy.minCreditsUsdMicros },
   });
   transport.creditGuard = creditGuard;
+  await agent.restore();
+  const computeBudget = await new ComputeBudget({
+    root: path.join(financialRoot, "shared-compute"),
+  }).initialize({ legacyDays: agent.state.days });
+  transport.computeBudget = computeBudget;
+  let chatGatewaySecret = null;
+  try {
+    const candidate = (
+      await readFile(
+        path.join(
+          homedir(),
+          ".local/share/project-rat-race/chat-gateway.secret",
+        ),
+        "utf8",
+      )
+    ).trim();
+    if (/^[a-f0-9]{64}$/.test(candidate)) chatGatewaySecret = candidate;
+  } catch (e) {
+    if (e.code !== "ENOENT") throw e;
+  }
+  let budgetCached = null,
+    budgetCachedAt = 0,
+    budgetPending = null;
+  const budgetStatus = async () => {
+    if (budgetCached && Date.now() - budgetCachedAt < 1000) return budgetCached;
+    if (!budgetPending)
+      budgetPending = computeBudget
+        .status()
+        .then((value) => {
+          budgetCached = value;
+          budgetCachedAt = Date.now();
+          return value;
+        })
+        .finally(() => {
+          budgetPending = null;
+        });
+    return budgetPending;
+  };
+  const chat = new RatChat({
+    complete: (options) =>
+      transport.complete({
+        ...options,
+        budgetChannel: "chat",
+        maxTokens: 600,
+        timeoutMs: 25000,
+      }),
+    getContext: () => ({ status: runtime.status(), workshop: agent.status() }),
+    canReply: async () => {
+      if (
+        !chatGatewaySecret ||
+        closed ||
+        !runtime.isAuthorized() ||
+        !runtime.state ||
+        !resources.active ||
+        !transport.ready
+      )
+        return { allowed: false, reason: "unavailable", retryAfterSeconds: 15 };
+      if (agent.busy)
+        return { allowed: false, reason: "busy", retryAfterSeconds: 5 };
+      const budget = await budgetStatus();
+      if (BigInt(budget.chatAvailableUsdMicros) < 20000n)
+        return {
+          allowed: false,
+          reason: "budget_exhausted",
+          retryAfterSeconds: 60,
+        };
+      return { allowed: true };
+    },
+  });
   const services = {
+    chat,
+    chatGatewaySecret,
     internet,
     economy: resources,
     workshop: {
@@ -157,6 +230,8 @@ export async function createEngine({
     transport,
     funding,
     creditGuard,
+    computeBudget,
+    chat,
     resources,
     runner,
     tools,

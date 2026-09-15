@@ -30,6 +30,7 @@ import Workshop from "./Workshop";
 import { ActivityFrame, activityAge, useActivityClock } from "./Activity";
 import Manifesto from "./Manifesto";
 import Navigation from "./Navigation";
+import RatChat from "./RatChat";
 import { ArrivalReveal, KineticHeadline } from "./Arrival";
 import "./experience/journey.css";
 import "./experience/hardware-stage.css";
@@ -402,6 +403,9 @@ export default function App() {
               </p>
               <a className="primary-link" href="#machine">
                 inside the experiment <ArrowDown size={19} />
+              </a>
+              <a className="hero-chat-link" href="#talk">
+                talk to the rat <ArrowUpRight size={16} />
               </a>
             </div>
             <div className="hero-bottom">
@@ -846,6 +850,7 @@ export default function App() {
             )}
           </section>
           <Workshop status={status} />
+          <RatChat />
           <Manifesto />
           <section
             id="protocol"
