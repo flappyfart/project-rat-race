@@ -11,6 +11,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535)
 const configPath = path.join(root, "config/launch.json"),
   launchConfig = JSON.parse(await readFile(configPath, "utf8"));
 const engine =
+  launchConfig.runtimeMode === "awaiting_launch" ||
   launchConfig.launchNetwork === "solana"
     ? await createAwaitingLaunchEngine({ configPath })
     : await createEngine({

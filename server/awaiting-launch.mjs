@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { MODEL_VERSION } from "./learner.mjs";
 
-// A real disabled mode, not a simulated Solana implementation. No wallet,
-// browser, RPC client, learner state or paid agent is constructed here.
+// Explicitly disabled presentation mode. No wallet, RPC client, browser,
+// learner state or paid agent is constructed for any network.
 export async function createAwaitingLaunchEngine({ configPath }) {
   let config = {},
     closed = false;
@@ -13,19 +13,36 @@ export async function createAwaitingLaunchEngine({ configPath }) {
       config = {};
     }
   };
+  const network = () =>
+    config.launchNetwork === "robinhood"
+      ? {
+          name: "robinhood chain",
+          namespace: "eip155",
+          chainId: 4663,
+          quote: "ETH",
+        }
+      : config.launchNetwork === "solana"
+        ? { name: "solana", namespace: "solana", chainId: null, quote: "SOL" }
+        : {
+            name: "unconfigured network",
+            namespace: null,
+            chainId: null,
+            quote: "",
+          };
   const reason = () =>
     closed
       ? "operator stopped the waiting service"
       : config.contract
-        ? "solana mint supplied; verification and funding adapters still required"
-        : "awaiting solana CA. experiment and paid activity disabled";
+        ? `${network().name} contract supplied; verification, funding and explicit activation still required`
+        : `awaiting new ${network().name} CA. experiment and paid activity disabled`;
   const status = () => ({
     phase: config.enabled ? "verification_pending" : "prelaunch",
     experimentPhase: "sealed",
     reason: reason(),
-    chainNamespace: "solana",
-    chainId: null,
-    quoteAsset: "SOL",
+    chainNamespace: network().namespace,
+    chainId: network().chainId,
+    quoteAsset: network().quote,
+    tokenSymbol: config.tokenSymbol ?? null,
     contract: null,
     launchTx: null,
     startedAt: null,
@@ -33,7 +50,7 @@ export async function createAwaitingLaunchEngine({ configPath }) {
     totalSteps: 0,
     feesReceivedEth: null,
     stateHash: null,
-    sourceStatus: "solana market input not configured",
+    sourceStatus: `${network().name} market input not configured`,
     modelVersion: MODEL_VERSION,
     maze: null,
     escape: null,
@@ -48,17 +65,21 @@ export async function createAwaitingLaunchEngine({ configPath }) {
     protocol: () => ({
       launch: status(),
       method: {
-        name: "awaiting new solana experiment",
+        name: `awaiting new ${network().name} experiment`,
         modelVersion: MODEL_VERSION,
         isWholeBrainModel: false,
         anatomy: "reference only",
         activation:
-          "solana mint and launch evidence must be verified using a Solana-specific adapter before activation",
-        solanaAdapterReady: false,
+          "the new contract, launch evidence, data source and funding configuration require verification and explicit activation",
+        runtimeMode: "awaiting_launch",
+        activationEnabled: false,
+        ...(network().namespace === "solana"
+          ? { solanaAdapterReady: false }
+          : {}),
         internet: { enabled: false },
         economy: { treasuryConfigured: false, spendingEnabled: false },
         record:
-          "the prior robinhood test was archived privately; this run has no checkpoint or work history",
+          "previous runs remain archived separately; this run has no checkpoint or work history",
       },
     }),
   };
@@ -66,7 +87,7 @@ export async function createAwaitingLaunchEngine({ configPath }) {
     market: {
       status: () => ({
         available: false,
-        reason: "solana market input awaiting configuration",
+        reason: `${network().name} market input awaiting configuration`,
       }),
     },
     internet: {
@@ -79,7 +100,7 @@ export async function createAwaitingLaunchEngine({ configPath }) {
         events: [],
         screenshotUrl: null,
         frameId: null,
-        reason: "awaiting solana launch; no browser running",
+        reason: `awaiting ${network().name} launch; no browser running`,
       }),
       frame: async () => null,
     },
@@ -99,7 +120,7 @@ export async function createAwaitingLaunchEngine({ configPath }) {
         events: [],
         observedAt: null,
         reason:
-          "solana funding route not configured. previous wallet funds and financial records remain separate and untouched",
+          "funding configuration awaits explicit setup. previous wallet funds and financial records remain separate and untouched",
       }),
     },
     workshop: {
@@ -112,7 +133,7 @@ export async function createAwaitingLaunchEngine({ configPath }) {
         approvalMode: "mission",
         perActionApproval: false,
         executionStatus: "disabled",
-        mission: "await verified solana launch configuration",
+        mission: `await verified ${network().name} launch configuration`,
         projects: [],
         events: [],
         cycles: 0,

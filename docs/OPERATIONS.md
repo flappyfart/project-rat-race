@@ -1,6 +1,6 @@
 # operator setup
 
-Current state: awaiting a new Solana launch. `awaiting-launch.mjs` serves disabled status only and never constructs an RPC client, signing wallet, browser or paid agent. Solana verification and funding integration must be implemented and independently tested before activation. The reference worker details below describe the retained prior EVM implementation.
+Current target: Project Rat Race, ticker $RACE, on Robinhood Chain. `runtimeMode: awaiting_launch` serves disabled status only and never constructs an RPC client, signing wallet, browser or paid agent. A new exact contract, launch evidence, data source and funding configuration must be verified before explicit activation. Previous token addresses and archived runs must not be reused implicitly.
 
 The safe preview requires no wallet, account credential or VM. The full engine is a separate, explicitly configured operation.
 

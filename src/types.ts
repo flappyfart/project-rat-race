@@ -27,10 +27,10 @@ export type Status = {
 };
 export const locked: Status = {
   phase: "prelaunch",
-  reason: "awaiting solana CA",
-  chainNamespace: "solana",
-  chainId: null,
-  quoteAsset: "SOL",
+  reason: "awaiting new robinhood chain CA",
+  chainNamespace: "eip155",
+  chainId: 4663,
+  quoteAsset: "ETH",
   contract: null,
   launchTx: null,
   startedAt: null,

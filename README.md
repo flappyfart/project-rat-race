@@ -4,7 +4,7 @@
 
 ### the market is the maze.
 
-**$ESCAPE** · [website](https://projectratrace.org) · [x](https://x.com/Proj3ctRatRace)
+**$RACE** · [website](https://projectratrace.org) · [x](https://x.com/pr0jectratrace)
 
 A digital navigation experiment with a persistent learning controller, a market-shaped maze, and a treasury-funded AI workspace.
 
@@ -12,9 +12,11 @@ The first task is to find the exit. The larger objective is to make useful work 
 
 ## current launch
 
-The next Project Rat Race launch targets **Solana**. The prior Robinhood Chain run was a test and has been stopped and archived. The public site is back to an empty, sealed state with no CA, launch clock, learned history, browser activity or paid agent work.
+Project Rat Race now targets **Robinhood Chain**, ticker **$RACE**, with the official X account [@pr0jectratrace](https://x.com/pr0jectratrace).
 
-The Solana mint-verification, market and funding adapters are **not yet enabled**. The waiting mode cannot activate or spend, even if an enable flag is set. The retained EVM modules document the previous test implementation; they are not a Solana adapter. Existing wallets and financial records remain separate from resets. Do not treat a prior EVM treasury as a Solana receiving address.
+The site is in an explicit waiting mode with no new contract, launch clock, learned history, browser activity or paid agent work. Prior test runs and previously supplied token addresses are historical records, not the current launch identity.
+
+The waiting mode cannot activate or spend, even if an enable flag is set. A new exact contract, canonical launch evidence, data source, funding setup and explicit activation are required. Wallets and financial records remain separate from run resets.
 
 ## what this repository contains
 
@@ -112,7 +114,7 @@ npm run start:engine
 
 The protected reference worker uses macOS Keychain and a dedicated Lima Linux VM. Operating it requires an independently configured treasury, verified signing identity, current market source, isolated executor, budget policy and explicit launch authorization. Do not enable a funded configuration casually.
 
-The prior test used native ETH on Robinhood Chain for treasury funding. That legacy route is not the upcoming Solana funding configuration. Operator deposits remain funding, not verified creator fees or earned income.
+The prior test used native ETH on Robinhood Chain for treasury funding. Funding for the new launch remains disabled until explicitly configured. Operator deposits are funding, not verified creator fees or earned income.
 
 Read [architecture](docs/ARCHITECTURE.md), [operator setup](docs/OPERATIONS.md) and [security](SECURITY.md) before enabling anything.
 

@@ -21,7 +21,7 @@ import {
 } from "@phosphor-icons/react";
 import type { Status } from "./types";
 import "./navigation.css";
-const X_URL = "https://x.com/Proj3ctRatRace";
+const X_URL = "https://x.com/pr0jectratrace";
 const GITHUB_URL = "https://github.com/flappyfart/project-rat-race";
 const sections = [
   { id: "top", label: "the lab", icon: Flask },
@@ -266,7 +266,7 @@ export default function Navigation({
             </span>
           </a>
           <div className="rail-identity">
-            <strong>$escape / {status.quoteAsset.toLowerCase()}</strong>
+            <strong>$race / {status.quoteAsset.toLowerCase()}</strong>
             <span>
               {status.chainNamespace === "solana"
                 ? "solana"
@@ -283,10 +283,10 @@ export default function Navigation({
               href={X_URL}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="project rat race on x, @proj3ctratrace"
+              aria-label="project rat race on x, @pr0jectratrace"
             >
               <XLogo size={20} />
-              <span>@proj3ctratrace</span>
+              <span>@pr0jectratrace</span>
               <ArrowUpRight size={13} />
             </a>
             <button
@@ -340,7 +340,7 @@ export default function Navigation({
           </span>
         </a>
         <span className="mobile-ticker">
-          $escape <span>/ {status.quoteAsset.toLowerCase()}</span>
+          $race <span>/ {status.quoteAsset.toLowerCase()}</span>
         </span>
       </header>
       <div
@@ -369,7 +369,7 @@ export default function Navigation({
           href={X_URL}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="project rat race on x, @proj3ctratrace"
+          aria-label="project rat race on x, @pr0jectratrace"
         >
           <XLogo size={20} />
         </a>
@@ -394,7 +394,7 @@ export default function Navigation({
         <div className="sheet-body">
           <div className="sheet-heading">
             <div>
-              <span>$escape</span>
+              <span>$race</span>
               <h2 id="mobile-navigation-title">inside the experiment.</h2>
             </div>
             <button onClick={close} aria-label="close navigation" autoFocus>
@@ -426,9 +426,9 @@ export default function Navigation({
               href={X_URL}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="project rat race on x, @proj3ctratrace"
+              aria-label="project rat race on x, @pr0jectratrace"
             >
-              <XLogo size={19} /> @proj3ctratrace <ArrowUpRight size={14} />
+              <XLogo size={19} /> @pr0jectratrace <ArrowUpRight size={14} />
             </a>
             {treasuryUrl && (
               <a

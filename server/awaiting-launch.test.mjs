@@ -57,6 +57,33 @@ test("a supplied mint or accidentally enabled setting cannot invoke an unimpleme
   assert.equal(engine.services.workshop.status().topupsEnabled, false);
   assert.equal(engine.runtime.protocol().method.solanaAdapterReady, false);
 });
+test("robinhood RACE waiting mode does not reuse either earlier launch or allow paid activity", async (t) => {
+  const { root, engine } = await fixture(t, {
+    launchNetwork: "robinhood",
+    runtimeMode: "awaiting_launch",
+    tokenSymbol: "RACE",
+    enabled: true,
+    contract: "0x" + "1".repeat(40),
+    launchTx: "0x" + "2".repeat(64),
+  });
+  const before = await readdir(root);
+  await engine.tick();
+  const s = engine.runtime.status();
+  assert.equal(s.chainNamespace, "eip155");
+  assert.equal(s.chainId, 4663);
+  assert.equal(s.quoteAsset, "ETH");
+  assert.equal(s.tokenSymbol, "RACE");
+  assert.equal(s.phase, "verification_pending");
+  assert.equal(s.contract, null);
+  assert.equal(s.launchTx, null);
+  assert.equal(s.startedAt, null);
+  assert.equal(s.totalSteps, 0);
+  assert.equal(engine.runtime.isAuthorized(), false);
+  assert.equal(engine.services.economy.status().spendingEnabled, false);
+  assert.equal(engine.services.internet.status().pagesOpened, 0);
+  assert.equal(engine.services.workshop.status().cycles, 0);
+  assert.deepEqual(await readdir(root), before);
+});
 test("the legacy EVM verifier rejects a solana activation instead of trying EVM RPC", async () => {
   let calls = 0;
   const r = await verifyLaunch(
