@@ -212,6 +212,9 @@ export class Runtime {
         : this.gate.phase,
       reason: expired ? "chain verification refresh pending" : this.gate.reason,
       chainId: CHAIN_ID,
+      chainNamespace: "eip155",
+      tokenSymbol: this.config.tokenSymbol ?? null,
+      activatedAt: this.config.activation?.authorizedAt ?? null,
       quoteAsset: "ETH",
       contract: validAddress(this.config.contract)
         ? this.config.contract.toLowerCase()

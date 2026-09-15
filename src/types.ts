@@ -16,6 +16,7 @@ export type Status = {
   contract: string | null;
   launchTx: string | null;
   startedAt: string | null;
+  activatedAt?: string | null;
   episode: number;
   totalSteps: number;
   feesReceivedEth: number | null;

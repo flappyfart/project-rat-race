@@ -227,13 +227,17 @@ export class AgentTools {
       },
       {
         name: "verify_node",
+        description:
+          "At least two distinct positive expected results and one throws case. Inspect the existing module and export before verification.",
         args: {
           module: "relative module file",
           exportName: "exported function name",
           cases: [
             {
-              argsJson: "JSON array of inputs",
-              expectedJson: "JSON result",
+              argsJson:
+                "JSON array of function arguments, such as [1,2]. Encode exactly once. A single string or invalid input also requires an array.",
+              expectedJson:
+                "Valid JSON return value. Use null when throws is true.",
               throws: false,
             },
           ],
@@ -305,13 +309,27 @@ export class AgentTools {
         };
       }
       case "verify_node": {
-        const result = await verifyWork({
-          runner: this.runner,
-          files: await workspaceFiles(this.root),
-          module: args.module,
-          exportName: args.exportName,
-          cases: args.cases,
-        });
+        let result;
+        try {
+          result = await verifyWork({
+            runner: this.runner,
+            files: await workspaceFiles(this.root),
+            module: args.module,
+            exportName: args.exportName,
+            cases: args.cases,
+          });
+        } catch (e) {
+          if (e.code !== "VERIFICATION_INPUT") throw e;
+          return {
+            verified: false,
+            error: e.message,
+            code: e.code,
+            field: e.field,
+            availableModules: e.availableModules ?? undefined,
+            retryGuidance:
+              "Correct the named field before retrying. Do not merely change the summary. Use list_files/read_file if the module or export is uncertain.",
+          };
+        }
         const dir = path.join(path.dirname(this.root), "verification");
         await mkdir(dir, { recursive: true, mode: 0o700 });
         await writeFile(path.join(dir, "latest.json"), JSON.stringify(result), {

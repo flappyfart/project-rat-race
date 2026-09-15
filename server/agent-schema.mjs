@@ -31,13 +31,31 @@ export const AGENT_RESPONSE_FORMAT = {
             args: { type: "array", items: string },
           }),
           branch("verify_node", {
-            module: string,
-            exportName: string,
+            module: {
+              type: "string",
+              description:
+                "Exact existing workspace module path. Inspect list_files/read_file; do not invent filenames.",
+            },
+            exportName: {
+              type: "string",
+              description: "Exact exported function name.",
+            },
             cases: {
               type: "array",
+              minItems: 3,
+              maxItems: 20,
               items: obj({
-                argsJson: string,
-                expectedJson: string,
+                argsJson: {
+                  type: "string",
+                  pattern: "^\\s*\\[",
+                  description:
+                    'JSON array of function arguments, encoded exactly once. Even one invalid string must be inside an array: ["invalid input"].',
+                },
+                expectedJson: {
+                  type: "string",
+                  description:
+                    "Valid JSON expected return value. Use null for a throws case.",
+                },
                 throws: { type: "boolean" },
               }),
             },

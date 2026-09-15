@@ -14,9 +14,11 @@ The first task is to find the exit. The larger objective is to make useful work 
 
 Project Rat Race now targets **Robinhood Chain**, ticker **$RACE**, with the official X account [@pr0jectratrace](https://x.com/pr0jectratrace).
 
-The site is in an explicit waiting mode with no new contract, launch clock, learned history, browser activity or paid agent work. Prior test runs and previously supplied token addresses are historical records, not the current launch identity.
+The official RACE experiment is activated on Robinhood Chain. Its contract is [`0x14998A0070e4Cb8302925d3126842243Ca3829ED`](https://robinhoodchain.blockscout.com/address/0x14998A0070e4Cb8302925d3126842243Ca3829ED). Prior test runs and token addresses remain separate historical records. Consult the live site's status for its current phase; activation does not mean the maze has been escaped or income earned.
 
-The waiting mode cannot activate or spend, even if an enable flag is set. A new exact contract, canonical launch evidence, data source, funding setup and explicit activation are required. Wallets and financial records remain separate from run resets.
+The canonical launch transaction anchors the token's launch evidence. Operator activation is a separate timestamp, used for the run's elapsed display. The AI work stage remains gated on a mechanically verified escape. The reference market feed is not the RACE token price or its trading pair.
+
+Public checkouts still default to an explicitly disabled waiting mode. They cannot activate or spend merely by being opened, and no operator settings or financial records are shipped. Wallets and financial history remain separate from simulation state.
 
 ## what this repository contains
 

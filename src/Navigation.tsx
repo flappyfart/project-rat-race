@@ -208,7 +208,10 @@ export default function Navigation({
         <div className="telemetry-clock">
           <dt>elapsed</dt>
           <dd data-stat="elapsed">
-            <Elapsed startedAt={status.startedAt} unavailable={unavailable} />
+            <Elapsed
+              startedAt={status.activatedAt ?? status.startedAt}
+              unavailable={unavailable}
+            />
           </dd>
         </div>
       </dl>
