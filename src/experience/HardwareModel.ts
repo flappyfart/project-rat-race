@@ -8,6 +8,7 @@ export type HardwareModelOptions = {
   maze: Maze | null;
   statusLabel: string;
   steps: number;
+  detail?: "full" | "compact";
 };
 export type HardwareModel = {
   root: THREE.Group;
@@ -94,6 +95,7 @@ function* buildHardwareChunks({
   maze,
   statusLabel,
   steps,
+  detail = "full",
 }: HardwareModelOptions): Generator<void, HardwareModel, void> {
   const root = new THREE.Group();
   root.name = "prr-hardware";
@@ -175,7 +177,7 @@ function* buildHardwareChunks({
     bake(
       parent,
       radius
-        ? new RoundedBoxGeometry(...size, 2, radius)
+        ? new RoundedBoxGeometry(...size, detail === "compact" ? 1 : 2, radius)
         : new THREE.BoxGeometry(...size),
       mat,
       at,
@@ -192,7 +194,14 @@ function* buildHardwareChunks({
   ) {
     bake(
       parent,
-      new THREE.CylinderGeometry(radius, radius, height, sides),
+      new THREE.CylinderGeometry(
+        radius,
+        radius,
+        height,
+        detail === "compact" && sides > 8
+          ? Math.max(8, Math.ceil(sides * 0.65))
+          : sides,
+      ),
       mat,
       at,
       rotation,
@@ -207,7 +216,17 @@ function* buildHardwareChunks({
     const curve = new THREE.CatmullRomCurve3(
       points.map((p) => new THREE.Vector3(...p)),
     );
-    bake(parent, new THREE.TubeGeometry(curve, 32, radius, 8, false), mat);
+    bake(
+      parent,
+      new THREE.TubeGeometry(
+        curve,
+        detail === "compact" ? 18 : 32,
+        radius,
+        detail === "compact" ? 6 : 8,
+        false,
+      ),
+      mat,
+    );
   }
   function screw(parent: THREE.Group, x: number, y: number, z: number) {
     cylinder(parent, silver, [x, y, z], 0.083, 0.045, [0, 0, 0], 12);
@@ -726,6 +745,7 @@ function* buildHardwareChunks({
       mesh.castShadow = !mat.transparent;
       mesh.receiveShadow = true;
       mesh.name = `${parent.name}-surface`;
+      mesh.matrixAutoUpdate = false;
       parent.add(mesh);
       yield;
     }
@@ -857,7 +877,7 @@ function* buildHardwareChunks({
     keyboard.position.set(0, -0.25 - t * 0.9, 5.65 + t * 4.1);
     keyboard.rotation.x = t * 0.12;
     root.userData.explode = t;
-    root.updateMatrixWorld(true);
+    // The renderer updates world matrices once. Avoid a second forced subtree traversal.
   }
   root.userData.landmarks = {
     board: [0, 0.3, 0],

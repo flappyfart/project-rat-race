@@ -20,6 +20,14 @@ Mobile uses a wider, pulled-back composition, limited pixel density, no generate
 
 The fallback JPEGs are rendered from this original model, not generated screenshots of a fictional running experiment. They support unavailable/lost WebGL and early loading. Model materials and geometry are original project artwork; the reference site supplied motion inspiration, not assets.
 
+## mobile scroll coordination
+
+Mobile and coarse-pointer devices use compact versions of the same hardware geometry and coordinate system. A single requestAnimationFrame loop follows the target scroll progress with elapsed-time-based damping; scroll updates no longer destroy and create new tweens. Camera pose values are sampled into reusable storage, redundant projection/matrix updates are avoided, and unchanged status polls do not trigger GPU redraws.
+
+The mobile backdrop uses a stable large viewport height and the story chapters use stable small viewport heights. Minor height-only browser chrome changes do not reallocate the drawing buffer. Real width, orientation or large viewport changes still resize it. Layout refreshes are deferred until scrolling settles where appropriate. The mobile dock uses an opaque surface instead of an expensive backdrop blur. Portrait and short landscape layouts have separate composition rules.
+
+`server/mobile-motion.test.mjs` covers follow stability, reversal, buffer-resize policy and compact geometry. `scripts/mobile-gesture-qa.mjs` exercises native emulated touch swipes, toolbar-height pulses, orientation, pause/resume, anatomy scrolling and menu access. `scripts/mobile-scroll-benchmark.mjs` records repeatable frame and allocation metrics under Chrome CPU throttling. These are emulation measurements, not a guarantee of frame rate on every physical device.
+
 ## verification
 
 `server/hardware-presentation.test.mjs` tests camera bounds, chapter mapping, reduced-motion poses, geometry construction, data immutability and disposal. `scripts/hardware-qa.mjs` checks desktop/mobile motion, reversal, pause/resume, reduced motion, unavailable WebGL, accessible controls, asset loading and unchanged experiment identity/state. No live scenario is reset to satisfy presentation tests.

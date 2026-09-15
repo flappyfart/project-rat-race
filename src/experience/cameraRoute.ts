@@ -121,3 +121,35 @@ export function sampleCameraRoute(
     composition: mix(a.composition, b.composition),
   };
 }
+
+export type MutableCameraPose = {
+  position: [number, number, number];
+  target: [number, number, number];
+  explode: number;
+  opacity: number;
+  composition: number;
+};
+export function sampleCameraRouteInto(
+  progress: number,
+  mobile: boolean,
+  reducedMotion: boolean,
+  out: MutableCameraPose,
+) {
+  const p = reducedMotion ? 0 : clampProgress(progress),
+    i = Math.floor(p),
+    a = CAMERA_ROUTE[i],
+    b = CAMERA_ROUTE[Math.min(i + 1, CAMERA_ROUTE.length - 1)],
+    x = p - i,
+    t = x * x * (3 - 2 * x),
+    scale = mobile ? 1.5 - 0.18 * Math.min(p, 1) : 1;
+  for (let j = 0; j < 3; j++) {
+    const target = a.target[j] + (b.target[j] - a.target[j]) * t;
+    out.target[j] = target;
+    const position = a.position[j] + (b.position[j] - a.position[j]) * t;
+    out.position[j] = mobile ? target + (position - target) * scale : position;
+  }
+  out.explode = a.explode + (b.explode - a.explode) * t;
+  out.opacity = a.opacity + (b.opacity - a.opacity) * t;
+  out.composition = a.composition + (b.composition - a.composition) * t;
+  return out;
+}

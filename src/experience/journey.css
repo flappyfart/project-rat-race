@@ -215,7 +215,7 @@
 }
 @media (max-width: 1023px) {
   .hardware-main .hero {
-    min-height: calc(115dvh - 70px);
+    min-height: calc(115svh - 70px);
     padding: 26px 6% 105px;
     justify-content: flex-start;
   }
@@ -256,7 +256,7 @@
     font-size: 10px;
   }
   .hardware-main .journey-chapter {
-    min-height: 110dvh;
+    min-height: 110svh;
     padding: 50px 6%;
     align-items: flex-start;
   }
@@ -282,7 +282,7 @@
     );
   }
   .hardware-main .maze-chapter {
-    min-height: 115dvh;
+    min-height: 115svh;
     align-items: flex-end;
     padding-bottom: 110px;
   }
@@ -307,6 +307,69 @@
   }
   .hardware-main .connection-section {
     padding-top: 65px;
+  }
+}
+@media (max-width: 1023px) {
+  .mobile-dock {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--panel);
+  }
+  .hardware-main {
+    touch-action: pan-y pinch-zoom;
+  }
+}
+@media (max-width: 1023px) and (max-height: 500px) and (orientation: landscape) {
+  html {
+    scroll-padding-top: 24px;
+  }
+  .hardware-main .hero {
+    min-height: 600px;
+    padding-top: 26px;
+  }
+  .hardware-main .hero-copy {
+    width: 45%;
+    max-width: 340px;
+  }
+  .hardware-main .hero h1 {
+    font-size: 48px;
+    margin: 18px 0;
+  }
+  .hardware-main .hero-description {
+    font-size: 14px;
+  }
+  .hardware-main .journey-chapter,
+  .hardware-main .maze-chapter {
+    min-height: 620px;
+    align-items: flex-start;
+    padding-top: 46px;
+    padding-bottom: 100px;
+  }
+  .hardware-main .journey-copy,
+  .hardware-main .maze-chapter .journey-copy {
+    width: 45%;
+    max-width: 340px;
+  }
+  .hardware-main .journey-copy h2,
+  .hardware-main .maze-chapter .journey-copy h2 {
+    font-size: 36px;
+  }
+  .hardware-main .journey-copy p {
+    font-size: 14px;
+  }
+  .mobile-dock {
+    max-width: 440px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+  }
+  .hardware-controls {
+    top: 12px;
+    bottom: auto;
+  }
+  .hardware-controls > span {
+    display: none;
   }
 }
 @media (max-width: 380px) {

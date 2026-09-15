@@ -6,21 +6,31 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Pause, Play } from "@phosphor-icons/react";
 import type { Status } from "../types";
 import { buildHardwareModelAsync } from "./HardwareModel";
-import { CHAPTERS, progressAtScroll, sampleCameraRoute } from "./cameraRoute";
+import {
+  CHAPTERS,
+  progressAtScroll,
+  sampleCameraRouteInto,
+} from "./cameraRoute";
+import type { MutableCameraPose } from "./cameraRoute";
+import { followScroll, shouldResizeDrawingBuffer } from "./mobileMotion";
 import "./hardware-stage.css";
 
 gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.config({ ignoreMobileResize: true });
 type Controls = {
-  render: () => void;
   setPaused: (paused: boolean) => void;
   updateStatus: (status: Status) => void;
 };
-const phaseLabel = (status: Status) =>
-  status.startedAt && status.maze
-    ? status.phase === "live"
+const phaseLabel = (s: Status) =>
+  s.startedAt && s.maze
+    ? s.phase === "live"
       ? "recorded experiment"
       : "recorded state paused"
     : "reference apparatus";
+const presentationKey = (s: Status) =>
+  `${phaseLabel(s)}:${s.totalSteps}:${s.startedAt ? (s.stateHash ?? JSON.stringify(s.maze)) : "reference"}`;
+const isMobile = () =>
+  matchMedia("(max-width: 1023px), (pointer: coarse)").matches;
 
 export default memo(function HardwareStage({
   theme,
@@ -50,16 +60,14 @@ export default memo(function HardwareStage({
     if (!host) return;
     let disposed = false,
       frame = 0,
-      refreshFrame = 0,
+      refreshTimer = 0,
       lost = false,
-      tween: gsap.core.Tween | null = null;
+      cleanupModel = () => {};
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
     let width = host.clientWidth,
       height = host.clientHeight,
-      small = width < 720,
-      tops: number[] = [],
+      small = isMobile(),
       motionPaused = pausedRef.current;
-    const rig = { progress: 0 };
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({
@@ -89,17 +97,17 @@ export default memo(function HardwareStage({
         0.08,
         180,
       );
-    const fogColor = theme === "dark" ? 0x111712 : 0xf4f4ee;
-    scene.fog = new THREE.Fog(fogColor, 38, 100);
-    const hemisphere = new THREE.HemisphereLight(
-      theme === "dark" ? 0xe6eee1 : 0xffffff,
-      0x46503c,
-      theme === "dark" ? 1.8 : 2.1,
+    scene.fog = new THREE.Fog(theme === "dark" ? 0x111712 : 0xf4f4ee, 38, 100);
+    scene.add(
+      new THREE.HemisphereLight(
+        theme === "dark" ? 0xe6eee1 : 0xffffff,
+        0x46503c,
+        theme === "dark" ? 1.8 : 2.1,
+      ),
     );
-    scene.add(hemisphere);
     const key = new THREE.DirectionalLight(
       0xfff7e8,
-      theme === "dark" ? 3.0 : 3.5,
+      theme === "dark" ? 3 : 3.5,
     );
     key.position.set(6, 17, 12);
     key.castShadow = true;
@@ -128,7 +136,6 @@ export default memo(function HardwareStage({
       room.dispose();
       pmrem.dispose();
     }
-    let cleanupModel = () => {};
     void (async () => {
       const data = latest.current,
         model = await buildHardwareModelAsync({
@@ -136,12 +143,14 @@ export default memo(function HardwareStage({
           maze: data.startedAt ? data.maze : null,
           statusLabel: phaseLabel(data),
           steps: data.totalSteps,
+          detail: small ? "compact" : "full",
         });
       if (disposed) {
         model.dispose();
         return;
       }
       scene.add(model.root);
+      host.dataset.geometryDetail = small ? "compact" : "full";
       const floorGeometry = new THREE.PlaneGeometry(110, 110),
         floorMaterial = new THREE.ShadowMaterial({
           color: theme === "dark" ? 0x020503 : 0x647354,
@@ -152,130 +161,221 @@ export default memo(function HardwareStage({
       floor.position.y = -1.08;
       floor.receiveShadow = true;
       scene.add(floor);
-      const target = new THREE.Vector3();
-      let lastExplode = -1;
-      const draw = () => {
+      const target = new THREE.Vector3(),
+        pose: MutableCameraPose = {
+          position: [0, 0, 0],
+          target: [0, 0, 0],
+          explode: 0,
+          opacity: 1,
+          composition: 0,
+        };
+      let progress = 0,
+        desired = 0,
+        lastFrameAt = 0,
+        lastInputAt = 0,
+        lastExplode = -1,
+        lastOpacity = -1,
+        lastOffsetX = NaN,
+        lastOffsetY = NaN,
+        renderCount = 0;
+      let tops: number[] = [],
+        layoutDirty = false,
+        mainHeight = 0,
+        refreshCount = 0,
+        lastState = presentationKey(data);
+      const main = document.getElementById("main");
+      const draw = (now: number) => {
         frame = 0;
-        if (disposed || lost || document.hidden) return;
+        if (disposed || lost || document.hidden) {
+          lastFrameAt = 0;
+          return;
+        }
         const still = motion.matches || motionPaused,
-          motionProgress = still ? 0 : rig.progress;
-        const pose = sampleCameraRoute(still ? 0 : rig.progress, small, still);
+          dt = lastFrameAt ? now - lastFrameAt : 1000 / 60;
+        lastFrameAt = now;
+        progress = still ? desired : followScroll(progress, desired, dt, small);
+        if (Math.abs(progress - desired) < 0.0002) progress = desired;
+        const p = still ? 0 : progress,
+          landscape = small && width > height * 1.2;
+        sampleCameraRouteInto(p, small && !landscape, still, pose);
         camera.position.set(...pose.position);
         target.set(...pose.target);
-        if (small) {
-          target.y += 1.8 * Math.max(0, 1 - motionProgress);
-          camera.position.y += 0.8 * Math.max(0, 1 - motionProgress);
+        if (small && !landscape) {
+          target.y += 1.8 * Math.max(0, 1 - p);
+          camera.position.y += 0.8 * Math.max(0, 1 - p);
         }
         camera.lookAt(target);
-        camera.setViewOffset(
-          width,
-          height,
-          small ? 0 : -width * 0.17 * pose.composition,
-          small ? -height * 0.025 * Math.max(0, 1 - motionProgress) : 0,
-          width,
-          height,
-        );
+        const ox = small && !landscape ? 0 : -width * 0.17 * pose.composition,
+          oy = small && !landscape ? -height * 0.025 * Math.max(0, 1 - p) : 0;
+        if (
+          !Number.isFinite(lastOffsetX) ||
+          Math.abs(ox - lastOffsetX) > 0.1 ||
+          Math.abs(oy - lastOffsetY) > 0.1
+        ) {
+          camera.setViewOffset(width, height, ox, oy, width, height);
+          lastOffsetX = ox;
+          lastOffsetY = oy;
+        }
         const explode = still ? 0 : pose.explode;
-        model.setExplode(explode);
-        if (Math.abs(explode - lastExplode) > 0.001) {
-          renderer.shadowMap.needsUpdate = true;
+        if (Math.abs(explode - lastExplode) > 0.00005) {
+          model.setExplode(explode);
+          renderer.shadowMap.needsUpdate = !small;
           lastExplode = explode;
         }
         renderer.render(scene, camera);
-        host.style.opacity = String(still ? 0.38 : pose.opacity);
-        host.dataset.sceneProgress = rig.progress.toFixed(4);
-        host.dataset.cameraPosition = camera.position
-          .toArray()
-          .map((n) => n.toFixed(3))
-          .join(",");
+        renderCount++;
+        const opacity = still ? 0.38 : pose.opacity;
+        if (Math.abs(opacity - lastOpacity) > 0.002) {
+          host.style.opacity = String(opacity);
+          lastOpacity = opacity;
+        }
+        host.dataset.sceneProgress = progress.toFixed(4);
+        host.dataset.targetProgress = desired.toFixed(4);
+        host.dataset.cameraPosition = `${camera.position.x.toFixed(3)},${camera.position.y.toFixed(3)},${camera.position.z.toFixed(3)}`;
         host.dataset.explode = explode.toFixed(3);
         host.dataset.cameraChapter =
-          CHAPTERS[Math.min(CHAPTERS.length - 1, Math.round(rig.progress))];
+          CHAPTERS[Math.min(CHAPTERS.length - 1, Math.round(progress))];
         host.dataset.renderState = "ready";
         host.dataset.drawCalls = String(renderer.info.render.calls);
         host.dataset.triangles = String(renderer.info.render.triangles);
+        host.dataset.renderCount = String(renderCount);
+        if (!still && progress !== desired) frame = requestAnimationFrame(draw);
+        else lastFrameAt = 0;
       };
       const requestRender = () => {
         if (!frame && !disposed && !lost && !document.hidden)
           frame = requestAnimationFrame(draw);
       };
       const move = (scroll: number, immediate = false) => {
-        const progress = progressAtScroll(scroll, tops);
-        if (motion.matches || motionPaused) {
-          tween?.kill();
-          rig.progress = progress;
-          requestRender();
-          return;
+        const next = progressAtScroll(scroll, tops),
+          changed = Math.abs(next - desired) > 0.00001;
+        desired = next;
+        if (immediate) progress = next;
+        if (immediate || changed) {
+          lastInputAt = performance.now();
+          if (!(motion.matches || motionPaused) || immediate) requestRender();
         }
-        tween?.kill();
-        if (immediate) {
-          rig.progress = progress;
-          requestRender();
-        } else
-          tween = gsap.to(rig, {
-            progress,
-            duration: 0.6,
-            ease: "power2.out",
-            onUpdate: requestRender,
-          });
       };
       const measure = () => {
-        const y = window.scrollY;
+        const y = window.scrollY,
+          inset =
+            parseFloat(
+              getComputedStyle(document.documentElement).scrollPaddingTop,
+            ) || 0;
         tops = CHAPTERS.map((id, index) => {
           const el = document.getElementById(id);
           return el
-            ? Math.max(0, el.getBoundingClientRect().top + y - 90)
+            ? Math.max(0, el.getBoundingClientRect().top + y - inset)
             : index
               ? (tops[index - 1] ?? 0)
               : 0;
         });
         for (let i = 1; i < tops.length; i++)
           tops[i] = Math.max(tops[i], tops[i - 1] + 1);
+        mainHeight = main?.getBoundingClientRect().height ?? 0;
       };
       measure();
       const trigger = ScrollTrigger.create({
-        trigger: document.getElementById("main"),
+        trigger: main,
         start: "top top",
         end: "bottom bottom",
         onUpdate: (self) => move(self.scroll()),
         onRefresh: (self) => {
           measure();
-          move(self.scroll(), true);
+          move(self.scroll());
         },
       });
-      const resize = () => {
-        width = host.clientWidth;
-        height = host.clientHeight;
-        if (!width || !height) return;
-        small = width < 720;
+      const applyResize = () => {
+        const next = { width: host.clientWidth, height: host.clientHeight };
+        if (!shouldResizeDrawingBuffer({ width, height }, next, small))
+          return false;
+        width = next.width;
+        height = next.height;
+        small = isMobile();
         renderer.setPixelRatio(Math.min(devicePixelRatio, small ? 1 : 1.35));
         renderer.setSize(width, height, false);
+        renderer.shadowMap.enabled = !small;
         camera.aspect = width / height;
         camera.fov = small ? 52 : 40;
         camera.updateProjectionMatrix();
-        measure();
-        move(trigger.scroll(), true);
+        lastOffsetX = NaN;
+        renderer.shadowMap.needsUpdate = !small;
+        return true;
       };
-      const observer = new ResizeObserver(() => {
-        if (refreshFrame) cancelAnimationFrame(refreshFrame);
-        refreshFrame = requestAnimationFrame(() => {
-          resize();
-          ScrollTrigger.refresh();
-        });
+      const refresh = () => {
+        refreshTimer = 0;
+        if (disposed) return;
+        const next = { width: host.clientWidth, height: host.clientHeight };
+        const hardResize = shouldResizeDrawingBuffer(
+          { width, height },
+          next,
+          small,
+        );
+        if (
+          !hardResize &&
+          (ScrollTrigger.isScrolling() || performance.now() - lastInputAt < 180)
+        ) {
+          refreshTimer = window.setTimeout(refresh, 180);
+          return;
+        }
+        const resized = applyResize();
+        if (resized || layoutDirty) {
+          layoutDirty = false;
+          measure();
+          refreshCount++;
+          host.dataset.layoutRefreshes = String(refreshCount);
+          trigger.refresh();
+          move(trigger.scroll(), resized);
+        }
+      };
+      const queueRefresh = () => {
+        if (!refreshTimer) refreshTimer = window.setTimeout(refresh, 120);
+      };
+      const observer = new ResizeObserver((entries) => {
+        const next = { width: host.clientWidth, height: host.clientHeight };
+        const toolbarOnly =
+          small &&
+          Math.abs(next.width - width) <= 1 &&
+          Math.abs(next.height - height) > 1 &&
+          !shouldResizeDrawingBuffer({ width, height }, next, true);
+        if (toolbarOnly) {
+          mainHeight = main?.getBoundingClientRect().height ?? mainHeight;
+          return;
+        }
+        for (const entry of entries)
+          if (
+            entry.target === main &&
+            Math.abs(entry.contentRect.height - mainHeight) > 2
+          )
+            layoutDirty = true;
+        if (
+          layoutDirty ||
+          shouldResizeDrawingBuffer({ width, height }, next, small)
+        )
+          queueRefresh();
       });
       observer.observe(host);
-      const main = document.getElementById("main");
       if (main) observer.observe(main);
+      const scrollEnd = () => {
+        if (layoutDirty) queueRefresh();
+      };
+      ScrollTrigger.addEventListener("scrollEnd", scrollEnd);
       const changeMotion = () => {
-        tween?.kill();
-        move(trigger.scroll(), true);
+        cancelAnimationFrame(frame);
+        frame = 0;
+        lastFrameAt = 0;
+        progress = desired = progressAtScroll(trigger.scroll(), tops);
+        requestRender();
       };
       const visibility = () => {
         if (document.hidden) {
           cancelAnimationFrame(frame);
           frame = 0;
-          tween?.kill();
-        } else move(trigger.scroll(), true);
+          lastFrameAt = 0;
+        } else {
+          measure();
+          move(trigger.scroll(), true);
+        }
       };
       const contextLost = (event: Event) => {
         event.preventDefault();
@@ -289,7 +389,7 @@ export default memo(function HardwareStage({
       };
       const contextRestored = () => {
         lost = false;
-        renderer.shadowMap.needsUpdate = true;
+        renderer.shadowMap.needsUpdate = !small;
         setRenderState("ready");
         requestRender();
       };
@@ -301,35 +401,35 @@ export default memo(function HardwareStage({
       motion.addEventListener("change", changeMotion);
       document.addEventListener("visibilitychange", visibility);
       api.current = {
-        render: requestRender,
         setPaused: (value) => {
           motionPaused = value;
           changeMotion();
         },
         updateStatus: (value) => {
+          const nextKey = presentationKey(value);
+          if (nextKey === lastState) return;
+          lastState = nextKey;
           model.setMaze(value.startedAt ? value.maze : null);
           model.setStatus(phaseLabel(value), value.totalSteps);
           requestRender();
         },
       };
-      renderer.shadowMap.needsUpdate = true;
+      renderer.shadowMap.needsUpdate = !small;
       move(trigger.scroll(), true);
       setRenderState("ready");
-      let cancelled = false;
       void document.fonts.ready.then(() => {
-        if (!cancelled && !disposed) {
-          measure();
-          ScrollTrigger.refresh();
+        if (!disposed) {
+          layoutDirty = true;
+          queueRefresh();
         }
       });
       cleanupModel = () => {
-        cancelled = true;
         api.current = null;
         cancelAnimationFrame(frame);
-        cancelAnimationFrame(refreshFrame);
-        tween?.kill();
+        clearTimeout(refreshTimer);
         trigger.kill();
         observer.disconnect();
+        ScrollTrigger.removeEventListener("scrollEnd", scrollEnd);
         motion.removeEventListener("change", changeMotion);
         document.removeEventListener("visibilitychange", visibility);
         renderer.domElement.removeEventListener(

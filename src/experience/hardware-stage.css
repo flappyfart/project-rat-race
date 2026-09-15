@@ -74,6 +74,10 @@
   }
 }
 @media (max-width: 1023px) {
+  .hardware-backdrop {
+    bottom: auto;
+    height: 100lvh;
+  }
   .hardware-controls {
     right: 13px;
     bottom: calc(88px + env(safe-area-inset-bottom));
